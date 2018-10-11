@@ -3,10 +3,10 @@ import json
 import pytest
 
 from conftest import add_permissions, check_dictionary, check_json_response
-from pulsar import APIException, NewJSONEncoder, _403Exception, cache, db
-from pulsar.forums.models import (ForumLastViewedPost, ForumPost, ForumThread,
+from core import APIException, NewJSONEncoder, _403Exception, cache, db
+from forums.models import (ForumLastViewedPost, ForumPost, ForumThread,
                                   ForumThreadSubscription)
-from pulsar.users.models import User
+from core.users.models import User
 
 
 def test_user_thread_count(app, client):

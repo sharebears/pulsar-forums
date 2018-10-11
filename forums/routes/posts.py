@@ -5,7 +5,7 @@ import pytz
 from voluptuous import All, Length, Range, Schema
 
 from core import APIException, db
-from core.forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
+from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
                                   ForumThreadSubscription)
 from core.utils import assert_user, require_permission, validate_data
 from core.validators import PostLength

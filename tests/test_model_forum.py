@@ -1,8 +1,8 @@
 import pytest
 
 from conftest import add_permissions, check_dictionary
-from pulsar import APIException, NewJSONEncoder, _403Exception, cache, db
-from pulsar.forums.models import Forum, ForumSubscription
+from core import APIException, NewJSONEncoder, _403Exception, cache, db
+from forums.models import Forum, ForumSubscription
 
 
 def test_forum_from_pk(app, authed_client):

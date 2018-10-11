@@ -1,6 +1,6 @@
 from conftest import add_permissions, check_json_response
-from pulsar import db
-from pulsar.forums.models import ForumSubscription, ForumThreadSubscription
+from core import db
+from forums.models import ForumSubscription, ForumThreadSubscription
 
 
 def test_subscribe_to_forum(app, authed_client):

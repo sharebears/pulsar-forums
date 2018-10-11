@@ -1,11 +1,13 @@
 import pytest
+import forums
 
-from conftest import add_permissions
-from pulsar import db
+from core.conftest import *  # noqa: F401, F403
+from core.conftest import add_permissions, UNPOPULATE_FUNCTIONS, PLUGINS
+from core import db
 
 
 @pytest.fixture(autouse=True)
-def populate_db(app, client):
+def populate_db_(app, client):
     db.engine.execute(
         """INSERT INTO forums_categories (id, name, description, position, deleted) VALUES
         (1, 'Site', 'General site discussion', 1, 'f'),
@@ -101,3 +103,22 @@ def populate_db(app, client):
         'forums_threads_permission_5',
         table='forums_permissions'
         )
+
+
+def unpopulate_database():
+    db.engine.execute("DELETE FROM forums_polls_answers")
+    db.engine.execute("DELETE FROM forums_polls_choices")
+    db.engine.execute("DELETE FROM forums_polls")
+    db.engine.execute("DELETE FROM forums_threads_notes")
+    db.engine.execute("DELETE FROM forums_threads_subscriptions")
+    db.engine.execute("DELETE FROM forums_forums_subscriptions")
+    db.engine.execute("DELETE FROM last_viewed_forum_posts")
+    db.engine.execute("DELETE FROM forums_posts_edit_history")
+    db.engine.execute("DELETE FROM forums_posts")
+    db.engine.execute("DELETE FROM forums_threads")
+    db.engine.execute("DELETE FROM forums")
+    db.engine.execute("DELETE FROM forums_categories")
+
+
+PLUGINS.append(forums)
+UNPOPULATE_FUNCTIONS.append(unpopulate_database)

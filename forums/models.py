@@ -8,7 +8,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.elements import BinaryExpression
 
 from core import APIException, _403Exception, cache, db
-from core.forums.serializers import (ForumCategorySerializer,
+from forums.serializers import (ForumCategorySerializer,
                                        ForumPollChoiceSerializer, ForumPollSerializer,
                                        ForumPostEditHistorySerializer,
                                        ForumPostSerializer, ForumSerializer,

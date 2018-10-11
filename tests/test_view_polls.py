@@ -3,8 +3,8 @@ import json
 import pytest
 
 from conftest import add_permissions, check_json_response
-from pulsar import cache
-from pulsar.forums.models import ForumPoll, ForumPollChoice
+from core import cache
+from forums.models import ForumPoll, ForumPollChoice
 
 
 def test_view_poll(app, authed_client):

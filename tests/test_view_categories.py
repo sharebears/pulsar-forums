@@ -3,7 +3,7 @@ import json
 import pytest
 
 from conftest import add_permissions, check_json_response
-from pulsar.forums.models import ForumCategory
+from forums.models import ForumCategory
 
 
 def test_view_categories(app, authed_client):

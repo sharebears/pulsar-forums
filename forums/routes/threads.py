@@ -2,7 +2,7 @@ import flask
 from voluptuous import All, In, Length, Range, Schema
 
 from core import db
-from core.forums.models import (Forum, ForumPost, ForumSubscription, ForumThread,
+from forums.models import (Forum, ForumPost, ForumSubscription, ForumThread,
                                   ForumThreadNote, ForumThreadSubscription)
 from core.utils import require_permission, validate_data
 from core.validators import BoolGET

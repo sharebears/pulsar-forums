@@ -1,9 +1,9 @@
 import pytest
 
 from conftest import add_permissions, check_dictionary
-from pulsar import APIException, NewJSONEncoder, cache
-from pulsar.forums.models import ForumPost, ForumPostEditHistory
-from pulsar.users.models import User
+from core import APIException, NewJSONEncoder, cache
+from forums.models import ForumPost, ForumPostEditHistory
+from core.users.models import User
 
 
 def test_user_post_count(app, client):

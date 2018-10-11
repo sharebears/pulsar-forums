@@ -3,7 +3,7 @@ import json
 import pytest
 
 from conftest import add_permissions, check_json_response
-from pulsar.forums.models import Forum, ForumThread
+from forums.models import Forum, ForumThread
 
 
 def test_view_forum(app, authed_client):

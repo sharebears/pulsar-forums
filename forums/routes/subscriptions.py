@@ -1,7 +1,7 @@
 import flask
 
 from core import APIException, db
-from core.forums.models import (Forum, ForumSubscription, ForumThread,
+from forums.models import (Forum, ForumSubscription, ForumThread,
                                   ForumThreadSubscription)
 from core.utils import require_permission
 

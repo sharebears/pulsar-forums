@@ -1,7 +1,7 @@
 import pytest
 
-from pulsar import APIException, _403Exception, db
-from pulsar.forums.models import ForumPoll, ForumPollAnswer, ForumPollChoice
+from core import APIException, _403Exception, db
+from forums.models import ForumPoll, ForumPollAnswer, ForumPollChoice
 
 
 def test_forum_poll_from_id(app, authed_client):
