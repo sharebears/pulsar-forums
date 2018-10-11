@@ -4,10 +4,10 @@ from typing import Union
 import flask
 from voluptuous import All, Any, In, Length, Optional, Range, Schema
 
-from pulsar import db
-from pulsar.forums.models import Forum, ForumCategory, ForumThread
-from pulsar.utils import require_permission, validate_data
-from pulsar.validators import BoolGET
+from core import db
+from core.forums.models import Forum, ForumCategory, ForumThread
+from core.utils import require_permission, validate_data
+from core.validators import BoolGET
 
 from . import bp
 

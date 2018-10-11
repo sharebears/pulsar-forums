@@ -7,16 +7,16 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.elements import BinaryExpression
 
-from pulsar import APIException, _403Exception, cache, db
-from pulsar.forums.serializers import (ForumCategorySerializer,
+from core import APIException, _403Exception, cache, db
+from core.forums.serializers import (ForumCategorySerializer,
                                        ForumPollChoiceSerializer, ForumPollSerializer,
                                        ForumPostEditHistorySerializer,
                                        ForumPostSerializer, ForumSerializer,
                                        ForumThreadNoteSerializer, ForumThreadSerializer)
-from pulsar.mixins import MultiPKMixin, SinglePKMixin
-from pulsar.permissions.models import ForumPermission
-from pulsar.users.models import User
-from pulsar.utils import cached_property
+from core.mixins import MultiPKMixin, SinglePKMixin
+from core.permissions.models import ForumPermission
+from core.users.models import User
+from core.utils import cached_property
 
 app = flask.current_app
 

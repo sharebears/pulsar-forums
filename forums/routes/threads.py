@@ -1,11 +1,11 @@
 import flask
 from voluptuous import All, In, Length, Range, Schema
 
-from pulsar import db
-from pulsar.forums.models import (Forum, ForumPost, ForumSubscription, ForumThread,
+from core import db
+from core.forums.models import (Forum, ForumPost, ForumSubscription, ForumThread,
                                   ForumThreadNote, ForumThreadSubscription)
-from pulsar.utils import require_permission, validate_data
-from pulsar.validators import BoolGET
+from core.utils import require_permission, validate_data
+from core.validators import BoolGET
 
 from . import bp
 

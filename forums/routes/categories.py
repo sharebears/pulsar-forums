@@ -1,10 +1,10 @@
 import flask
 from voluptuous import All, Any, Length, Optional, Range, Schema
 
-from pulsar import APIException, db
-from pulsar.forums.models import ForumCategory
-from pulsar.utils import require_permission, validate_data
-from pulsar.validators import BoolGET
+from core import APIException, db
+from core.forums.models import ForumCategory
+from core.utils import require_permission, validate_data
+from core.validators import BoolGET
 
 from . import bp
 

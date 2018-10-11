@@ -1,4 +1,5 @@
-from pulsar.forums.routes import bp  # noqa
+from forums import routes
+from werkzeug import find_modules, import_string
 
 # TODO: Flip names so forums is first
 
@@ -18,3 +19,10 @@ PERMISSIONS = [
     'forums_polls_vote',  # Vote on forum polls
     'no_post_length_limit',  # No post length limit
     ]
+
+
+def init_app(app):
+    with app.app_context():
+        for name in find_modules('forums', recursive=True):
+            import_string(name)
+        app.register_blueprint(routes.bp)
