@@ -21,8 +21,10 @@ def forum_thread_count(self) -> int:
 
 
 def modify_user_model():
-    User.assign_attr('__cache_key_forum_post_count__', 'users_{id}_forum_post_count')
-    User.assign_attr('__cache_key_forum_thread_count__', 'users_{id}_forum_thread_count')
-    User.assign_attr('__cache_key_forum_permissions__', 'users_{id}_forums_permissions')
-    User.assign_attr('forum_thread_count', forum_thread_count)
-    User.assign_attr('forum_post_count', forum_post_count)
+    User.assign_attrs(
+        __cache_key_forum_post_count__='users_{id}_forum_post_count',
+        __cache_key_forum_thread_count__='users_{id}_forum_thread_count',
+        __cache_key_forum_permissions__='users_{id}_forums_permissions',
+        forum_thread_count=forum_thread_count,
+        forum_post_count=forum_post_count,
+        )
