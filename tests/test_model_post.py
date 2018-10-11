@@ -2,8 +2,8 @@ import pytest
 
 from conftest import add_permissions, check_dictionary
 from core import APIException, NewJSONEncoder, cache
-from forums.models import ForumPost, ForumPostEditHistory
 from core.users.models import User
+from forums.models import ForumPost, ForumPostEditHistory
 
 
 def test_user_post_count(app, client):

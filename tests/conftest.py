@@ -1,9 +1,9 @@
 import pytest
-import forums
 
-from core.conftest import *  # noqa: F401, F403
-from core.conftest import add_permissions, UNPOPULATE_FUNCTIONS, PLUGINS
+import forums
 from core import db
+from core.conftest import *  # noqa: F401, F403
+from core.conftest import PLUGINS, UNPOPULATE_FUNCTIONS, add_permissions
 
 
 @pytest.fixture(autouse=True)

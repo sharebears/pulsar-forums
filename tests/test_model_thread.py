@@ -4,9 +4,9 @@ import pytest
 
 from conftest import add_permissions, check_dictionary, check_json_response
 from core import APIException, NewJSONEncoder, _403Exception, cache, db
-from forums.models import (ForumLastViewedPost, ForumPost, ForumThread,
-                                  ForumThreadSubscription)
 from core.users.models import User
+from forums.models import (ForumLastViewedPost, ForumPost, ForumThread,
+                           ForumThreadSubscription)
 
 
 def test_user_thread_count(app, client):

@@ -1,22 +1,21 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
-import flask
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.elements import BinaryExpression
 
+import flask
 from core import APIException, _403Exception, cache, db
-from forums.serializers import (ForumCategorySerializer,
-                                       ForumPollChoiceSerializer, ForumPollSerializer,
-                                       ForumPostEditHistorySerializer,
-                                       ForumPostSerializer, ForumSerializer,
-                                       ForumThreadNoteSerializer, ForumThreadSerializer)
 from core.mixins import MultiPKMixin, SinglePKMixin
 from core.permissions.models import ForumPermission
 from core.users.models import User
 from core.utils import cached_property
+from forums.serializers import (ForumCategorySerializer, ForumPollChoiceSerializer,
+                                ForumPollSerializer, ForumPostEditHistorySerializer,
+                                ForumPostSerializer, ForumSerializer,
+                                ForumThreadNoteSerializer, ForumThreadSerializer)
 
 app = flask.current_app
 

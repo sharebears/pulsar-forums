@@ -1,14 +1,14 @@
 import json
 from datetime import datetime
 
-import mock
 import pytest
 import pytz
 
+import mock
 from conftest import add_permissions, check_json_response
 from core import cache
 from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
-                                  ForumThreadSubscription)
+                           ForumThreadSubscription)
 
 
 def test_view_post(app, authed_client):

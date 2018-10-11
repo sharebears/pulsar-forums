@@ -1,10 +1,9 @@
 import flask
-from voluptuous import All, Any, Length, Optional, Range, Schema
-
 from core import APIException, db
-from forums.models import ForumCategory
 from core.utils import require_permission, validate_data
 from core.validators import BoolGET
+from forums.models import ForumCategory
+from voluptuous import All, Any, Length, Optional, Range, Schema
 
 from . import bp
 

@@ -2,12 +2,11 @@ from typing import Optional as Optional_
 from typing import Union
 
 import flask
-from voluptuous import All, Any, In, Length, Optional, Range, Schema
-
 from core import db
-from forums.models import Forum, ForumCategory, ForumThread
 from core.utils import require_permission, validate_data
 from core.validators import BoolGET
+from forums.models import Forum, ForumCategory, ForumThread
+from voluptuous import All, Any, In, Length, Optional, Range, Schema
 
 from . import bp
 
