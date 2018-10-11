@@ -1,5 +1,6 @@
 from forums import routes
 from werkzeug import find_modules, import_string
+from forums.modifications import modify_user_model
 
 # TODO: Flip names so forums is first
 
@@ -26,3 +27,5 @@ def init_app(app):
         for name in find_modules('forums', recursive=True):
             import_string(name)
         app.register_blueprint(routes.bp)
+
+    modify_user_model()
