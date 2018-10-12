@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
+import flask
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.elements import BinaryExpression
 
-import flask
 from core import APIException, _403Exception, cache, db
 from core.mixins import MultiPKMixin, SinglePKMixin
 from core.permissions.models import ForumPermission

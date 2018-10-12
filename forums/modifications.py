@@ -1,7 +1,6 @@
 from core.users.models import User
 from core.utils import cached_property
-from forums.models import ForumPost
-from forums.models import ForumThread
+from forums.models import ForumPost, ForumThread
 
 
 @cached_property

@@ -1,5 +1,6 @@
-from forums import routes
 from werkzeug import find_modules, import_string
+
+from forums import routes
 from forums.modifications import modify_user_model
 
 # TODO: Flip names so forums is first

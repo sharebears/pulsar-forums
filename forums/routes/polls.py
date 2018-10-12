@@ -1,11 +1,12 @@
 from typing import Dict, List  # type: ignore
 
 import flask
+from voluptuous import Optional, Schema
+
 from core import APIException, cache, db
 from core.utils import require_permission, validate_data
 from core.validators import BoolGET
 from forums.models import ForumPoll, ForumPollAnswer, ForumPollChoice
-from voluptuous import Optional, Schema
 
 from . import bp
 
