@@ -56,24 +56,40 @@ def test_unsubscribe_from_thread_not_subscribed(app, authed_client):
 
 
 def test_view_my_subscriptions(app, authed_client):
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/forums').get_json()['response']
-    assert {1, 2, 4} == {s['id'] for s in response['forum_subscriptions']}
-    assert {1, 3, 4} == {s['id'] for s in response['thread_subscriptions']}
+    assert {1, 2, 4} == {s['id'] for s in response}
 
 
-def test_view_my_subscriptions_empty(app, authed_client):
+def test_view_thread_subscriptions(app, authed_client):
+    add_permissions(app, 'forums_view_subscriptions')
+    response = authed_client.get('/subscriptions/threads').get_json()['response']
+    assert {1, 3, 4} == {s['id'] for s in response}
+
+
+def test_view_forum_subscriptions_empty(app, authed_client):
     db.engine.execute("DELETE FROM forums_forums_subscriptions")
+    add_permissions(app, 'forums_view_subscriptions')
+    response = authed_client.get('/subscriptions/forums').get_json()['response']
+    assert response == []
+
+
+def test_view_thread_subscriptions_empty(app, authed_client):
     db.engine.execute("DELETE FROM forums_threads_subscriptions")
-    add_permissions(app, 'view_forums')
-    response = authed_client.get('/subscriptions/forums').get_json()['response']
-    assert response['forum_subscriptions'] == []
-    assert response['thread_subscriptions'] == []
+    add_permissions(app, 'forums_view_subscriptions')
+    response = authed_client.get('/subscriptions/threads').get_json()['response']
+    assert response == []
 
 
-def test_view_my_subscriptions_no_forum_perms(app, authed_client):
+def test_view_forum_subscriptions_no_forum_perms(app, authed_client):
     db.engine.execute("DELETE FROM forums_permissions")
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/forums').get_json()['response']
-    assert response['forum_subscriptions'] == []
-    assert response['thread_subscriptions'] == []
+    assert response == []
+
+
+def test_view_thread_subscriptions_no_forum_perms(app, authed_client):
+    db.engine.execute("DELETE FROM forums_permissions")
+    add_permissions(app, 'forums_view_subscriptions')
+    response = authed_client.get('/subscriptions/threads').get_json()['response']
+    assert response == []

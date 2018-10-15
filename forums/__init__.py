@@ -20,6 +20,7 @@ PERMISSIONS = [
     'modify_forum_polls',  # Manipulate answer choices, feature, sticky polls
     'forums_polls_vote',  # Vote on forum polls
     'no_post_length_limit',  # No post length limit
+    'forums_view_subscriptions',
     ]
 
 

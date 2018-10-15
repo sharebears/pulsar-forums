@@ -96,11 +96,11 @@ def alter_forum_subscription(forum_id: int) -> flask.Response:
 
 
 @bp.route('/subscriptions/forums', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view_subscriptions')
 def view_forum_subscriptions() -> flask.Response:
     """
-    This is the endpoint to view forum and thread subscriptions. The ``view_forums``
-    permission is required to access this endpoint.
+    This is the endpoint to view forum and thread subscriptions. The
+    ``forums_view_subscriptions`` permission is required to access this endpoint.
 
     .. :quickref: ForumSubscription; View forum subscriptions.
 
@@ -126,7 +126,33 @@ def view_forum_subscriptions() -> flask.Response:
 
     :statuscode 200: The forum subscriptions
     """
-    return flask.jsonify({  # type: ignore
-        'forum_subscriptions': Forum.from_subscribed_user(flask.g.user.id),
-        'thread_subscriptions': ForumThread.from_subscribed_user(flask.g.user.id),
-        })
+    return flask.jsonify(Forum.from_subscribed_user(flask.g.user.id))
+
+
+@bp.route('/subscriptions/threads', methods=['GET'])
+@require_permission('forums_view_subscriptions')
+def view_thread_subscriptions() -> flask.Response:
+    """
+    This is the endpoint to view forum and thread subscriptions. The
+    ``forums_view_subscriptions`` permission is required to access this endpoint.
+
+    .. :quickref: ForumSubscription; View forum subscriptions.
+
+    **Example response**:
+
+    .. parsed-literal::
+
+       {
+         "status": "success",
+         "response": [
+              "<ForumThread>",
+              "<ForumThread>"
+            ]
+          }
+        }
+
+    :>json dict response: The forum and thread subscriptions
+
+    :statuscode 200: The forum subscriptions
+    """
+    return flask.jsonify(ForumThread.from_subscribed_user(flask.g.user.id))
