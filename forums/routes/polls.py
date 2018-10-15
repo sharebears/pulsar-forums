@@ -13,7 +13,7 @@ from . import bp
 app = flask.current_app
 
 
-@bp.route('/forums/polls/<int:id>', methods=['GET'])
+@bp.route('/polls/<int:id>', methods=['GET'])
 @require_permission('view_forums')
 def view_poll(id: int) -> flask.Response:
     """
@@ -52,7 +52,7 @@ MODIFY_FORUM_POLL_SCHEMA = Schema({
     })
 
 
-@bp.route('/forums/polls/<int:id>', methods=['PUT'])
+@bp.route('/polls/<int:id>', methods=['PUT'])
 @require_permission('modify_forum_polls')
 @validate_data(MODIFY_FORUM_POLL_SCHEMA)
 def modify_poll(id: int,
@@ -157,7 +157,7 @@ def change_poll_choices(poll: ForumPoll,
     db.session.commit()
 
 
-@bp.route('/forums/polls/choices/<int:choice_id>/vote', methods=['POST'])
+@bp.route('/polls/votes/<int:choice_id>', methods=['POST'])
 @require_permission('forums_polls_vote')
 def vote_on_poll(choice_id: int) -> flask.Response:
     """

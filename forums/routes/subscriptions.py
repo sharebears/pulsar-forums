@@ -7,7 +7,7 @@ from forums.models import Forum, ForumSubscription, ForumThread, ForumThreadSubs
 from . import bp
 
 
-@bp.route('/forums/threads/<int:thread_id>/subscribe', methods=['POST', 'DELETE'])
+@bp.route('/subscriptions/threads/<int:thread_id>', methods=['POST', 'DELETE'])
 @require_permission('modify_forum_subscriptions')
 def alter_thread_subscription(thread_id: int) -> flask.Response:
     """
@@ -51,7 +51,7 @@ def alter_thread_subscription(thread_id: int) -> flask.Response:
         return flask.jsonify(f'Successfully unsubscribed from thread {thread_id}.')
 
 
-@bp.route('/forums/<int:forum_id>/subscribe', methods=['POST', 'DELETE'])
+@bp.route('/subscriptions/forums/<int:forum_id>', methods=['POST', 'DELETE'])
 @require_permission('modify_forum_subscriptions')
 def alter_forum_subscription(forum_id: int) -> flask.Response:
     """
@@ -95,7 +95,7 @@ def alter_forum_subscription(forum_id: int) -> flask.Response:
         return flask.jsonify(f'Successfully unsubscribed from forum {forum_id}.')
 
 
-@bp.route('/forums/subscriptions', methods=['GET'])
+@bp.route('/subscriptions/forums', methods=['GET'])
 @require_permission('view_forums')
 def view_forum_subscriptions() -> flask.Response:
     """

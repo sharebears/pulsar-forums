@@ -9,7 +9,7 @@ from forums.models import ForumPoll, ForumPollChoice
 
 def test_view_poll(app, authed_client):
     add_permissions(app, 'view_forums')
-    response = authed_client.get('/forums/polls/1')
+    response = authed_client.get('/polls/1')
     check_json_response(response, {
         'id': 1,
         'featured': False,
@@ -21,14 +21,14 @@ def test_view_poll(app, authed_client):
 
 def test_view_poll_nonexistent(app, authed_client):
     add_permissions(app, 'view_forums')
-    response = authed_client.get('/forums/polls/99')
+    response = authed_client.get('/polls/99')
     check_json_response(response, 'ForumPoll 99 does not exist.')
 
 
 def test_modify_poll_closed_featured(app, authed_client):
     add_permissions(app, 'view_forums', 'modify_forum_polls')
     ForumPoll.from_pk(3)  # cache it
-    response = authed_client.put('/forums/polls/1', data=json.dumps({
+    response = authed_client.put('/polls/1', data=json.dumps({
         'closed': True, 'featured': True}))
     check_json_response(response, {
         'id': 1,
@@ -43,7 +43,7 @@ def test_modify_poll_closed_featured(app, authed_client):
 
 def test_modify_poll_unfeature(app, authed_client):
     add_permissions(app, 'view_forums', 'modify_forum_polls')
-    authed_client.put('/forums/polls/3', data=json.dumps({
+    authed_client.put('/polls/3', data=json.dumps({
         'featured': False,
         }))
     assert ForumPoll.get_featured() is None
@@ -52,7 +52,7 @@ def test_modify_poll_unfeature(app, authed_client):
 
 def test_modify_poll_choices(app, authed_client):
     add_permissions(app, 'view_forums', 'modify_forum_polls')
-    response = authed_client.put('/forums/polls/1', data=json.dumps({
+    response = authed_client.put('/polls/1', data=json.dumps({
         'choices': {
             'add': ['a', 'b', 'c'],
             'delete': [1, 2],
@@ -66,7 +66,7 @@ def test_modify_poll_choices(app, authed_client):
 
 def test_modify_poll_choices_errors(app, authed_client):
     add_permissions(app, 'view_forums', 'modify_forum_polls')
-    response = authed_client.put('/forums/polls/1', data=json.dumps({
+    response = authed_client.put('/polls/1', data=json.dumps({
         'choices': {
             'add': ['Choice A', 'Choice B'],
             'delete': [1, 5],
@@ -79,7 +79,7 @@ def test_modify_poll_choices_errors(app, authed_client):
 
 def test_modify_poll_choices_partial(app, authed_client):
     add_permissions(app, 'view_forums', 'modify_forum_polls')
-    response = authed_client.put('/forums/polls/1', data=json.dumps({
+    response = authed_client.put('/polls/1', data=json.dumps({
         'choices': {
             'add': ['Choice A', 'Choice B'],
         }})).get_json()['response']
@@ -90,7 +90,7 @@ def test_modify_poll_choices_partial(app, authed_client):
 
 def test_vote_poll(app, authed_client):
     add_permissions(app, 'view_forums', 'forums_polls_vote')
-    response = authed_client.post('/forums/polls/choices/6/vote')
+    response = authed_client.post('/polls/votes/6')
     check_json_response(response, 'You have successfully voted for choice 6.')
     assert ForumPollChoice.from_pk(6).answers == 1
 
@@ -99,11 +99,11 @@ def test_vote_poll(app, authed_client):
     'choice_id', [1, 2])
 def test_vote_poll_already_voted(app, authed_client, choice_id):
     add_permissions(app, 'view_forums', 'forums_polls_vote')
-    response = authed_client.post(f'/forums/polls/choices/{choice_id}/vote')
+    response = authed_client.post(f'/polls/votes/{choice_id}')
     check_json_response(response, 'You have already voted on this poll.')
 
 
 def test_vote_poll_doesnt_exist(app, authed_client):
     add_permissions(app, 'view_forums', 'forums_polls_vote')
-    response = authed_client.post(f'/forums/polls/choices/10/vote')
+    response = authed_client.post(f'/polls/votes/10')
     check_json_response(response, 'ForumPollChoice 10 does not exist.')
