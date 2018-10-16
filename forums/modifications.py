@@ -43,7 +43,7 @@ def forum_permissions(self) -> List[str]:
     return {p for p in self.permissions if p.startswith('forumaccess')}
 
 
-def modify_user_model():
+def modify_core():
     User.assign_attrs(
         __cache_key_forum_post_count__='users_{id}_forum_post_count',
         __cache_key_forum_thread_count__='users_{id}_forum_thread_count',
@@ -58,9 +58,10 @@ def modify_user_model():
         is_valid_permission=is_valid_permission,
         )
 
-
-def modify_core_config():
     Config.BASIC_PERMISSIONS += [
         'create_forum_posts',
         'create_forum_threads',
         ]
+
+    from forums import PERMISSIONS
+    UserPermission.all_permissions += PERMISSIONS
