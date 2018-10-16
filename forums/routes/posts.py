@@ -16,7 +16,7 @@ app = flask.current_app
 
 
 @bp.route('/forums/posts/<int:id>', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view')
 def view_post(id: int) -> flask.Response:
     """
     This endpoint allows users to view a forum post.
@@ -41,7 +41,7 @@ def view_post(id: int) -> flask.Response:
     return flask.jsonify(ForumPost.from_pk(
         id,
         _404=True,
-        include_dead=flask.g.user.has_permission('modify_forum_posts_advanced')))
+        include_dead=flask.g.user.has_permission('forums_posts_modify_advanced')))
 
 
 CREATE_FORUM_POST_SCHEMA = Schema({
@@ -51,12 +51,12 @@ CREATE_FORUM_POST_SCHEMA = Schema({
 
 
 @bp.route('/forums/posts', methods=['POST'])
-@require_permission('create_forum_posts')
+@require_permission('forums_posts_create')
 @validate_data(CREATE_FORUM_POST_SCHEMA)
 def create_post(contents: str,
                 thread_id: int) -> flask.Response:
     """
-    This is the endpoint for forum posting. The ``modify_forum_posts``
+    This is the endpoint for forum posting. The ``forums_posts_modify``
     permission is required to access this endpoint.
 
     .. :quickref: ForumPost; Create a forum post.
@@ -87,12 +87,12 @@ def create_post(contents: str,
     :statuscode 400: Creation unsuccessful
     """
     thread = ForumThread.from_pk(thread_id, _404=True)
-    if thread.locked and not flask.g.user.has_permission('forums_post_in_locked_threads'):
+    if thread.locked and not flask.g.user.has_permission('forums_post_in_locked'):
         raise APIException('You cannot post in a locked thread.')
     thread_last_post = thread.last_post
     if (thread_last_post
             and thread_last_post.poster_id == flask.g.user.id
-            and not flask.g.user.has_permission('forum_double_post')):
+            and not flask.g.user.has_permission('forums_posts_double')):
         if len(thread_last_post.contents) + len(contents) > 255997:
             raise APIException('Post could not be merged into previous post '
                                '(must be <256,000 characters combined).')
@@ -116,13 +116,13 @@ MODIFY_FORUM_POST_SCHEMA = Schema({
 
 
 @bp.route('/forums/posts/<int:id>', methods=['PUT'])
-@require_permission('create_forum_posts')
+@require_permission('forums_posts_create')
 @validate_data(MODIFY_FORUM_POST_SCHEMA)
 def modify_post(id: int,
                 sticky: bool = None,
                 contents: str = None) -> flask.Response:
     """
-    This is the endpoint for forum post editing. The ``modify_forum_posts``
+    This is the endpoint for forum post editing. The ``forums_posts_modify``
     permission is required to access this endpoint. Posts can be marked
     sticky with this endpoint.
 
@@ -155,11 +155,11 @@ def modify_post(id: int,
     :statuscode 404: Forum post does not exist
     """
     post = ForumPost.from_pk(id, _404=True)
-    assert_user(post.poster_id, 'modify_forum_posts')
+    assert_user(post.poster_id, 'forums_posts_modify')
     thread = ForumThread.from_pk(post.thread_id)
     if not thread:
         raise APIException(f'ForumPost {id} does not exist.')
-    if thread.locked and not flask.g.user.has_permission('modify_forum_posts'):
+    if thread.locked and not flask.g.user.has_permission('forums_posts_modify'):
         raise APIException('You cannot modify posts in a locked thread.')
     if contents is not None:
         ForumPostEditHistory.new(
@@ -170,7 +170,7 @@ def modify_post(id: int,
         post.contents = contents
         post.edited_user_id = flask.g.user.id
         post.edited_time = datetime.utcnow().replace(tzinfo=pytz.utc)
-    if flask.g.user.has_permission('modify_forum_posts'):
+    if flask.g.user.has_permission('forums_posts_modify'):
         if sticky is not None:
             post.sticky = sticky
     db.session.commit()
@@ -178,10 +178,10 @@ def modify_post(id: int,
 
 
 @bp.route('/forums/posts/<int:id>', methods=['DELETE'])
-@require_permission('modify_forum_posts_advanced')
+@require_permission('forums_posts_modify_advanced')
 def delete_post(id: int) -> flask.Response:
     """
-    This is the endpoint for forum post deletion . The ``modify_forum_posts_advanced``
+    This is the endpoint for forum post deletion . The ``forums_posts_modify_advanced``
     permission is required to access this endpoint. All posts in a deleted forum will also
     be deleted.
 

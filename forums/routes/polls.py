@@ -14,7 +14,7 @@ app = flask.current_app
 
 
 @bp.route('/polls/<int:id>', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view')
 def view_poll(id: int) -> flask.Response:
     """
     This endpoint allows users to view details about a poll.

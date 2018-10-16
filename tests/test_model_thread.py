@@ -212,7 +212,7 @@ def test_thread_last_viewed_none_available(app, authed_client):
 
 
 def test_add_thread_note(app, authed_client):
-    add_permissions(app, 'modify_forum_threads')
+    add_permissions(app, 'forums_threads_modify')
     response = authed_client.post('/forums/threads/1/notes', data=json.dumps({
         'note': 'ANotherNote',
         }))
@@ -224,7 +224,7 @@ def test_add_thread_note(app, authed_client):
 
 
 def test_add_thread_note_nonexistent_thread(app, authed_client):
-    add_permissions(app, 'modify_forum_threads')
+    add_permissions(app, 'forums_threads_modify')
     response = authed_client.post('/forums/threads/99/notes', data=json.dumps({
         'note': 'ANotherNote',
         }))
@@ -233,7 +233,7 @@ def test_add_thread_note_nonexistent_thread(app, authed_client):
 
 def test_add_thread_note_no_permissions(app, authed_client):
     db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
-    add_permissions(app, 'modify_forum_threads')
+    add_permissions(app, 'forums_threads_modify')
     response = authed_client.post('/forums/threads/1/notes', data=json.dumps({
         'note': 'ANotherNote',
         }))
@@ -310,7 +310,7 @@ def test_serialize_no_perms(app, authed_client):
 
 
 def test_serialize_detailed(app, authed_client):
-    add_permissions(app, 'modify_forum_threads')
+    add_permissions(app, 'forums_threads_modify')
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder().default(thread)
     check_dictionary(data, {
@@ -336,7 +336,7 @@ def test_serialize_detailed(app, authed_client):
 
 
 def test_serialize_very_detailed(app, authed_client):
-    add_permissions(app, 'modify_forum_threads', 'modify_forum_threads_advanced')
+    add_permissions(app, 'forums_threads_modify', 'forums_threads_modify_advanced')
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder().default(thread)
     check_dictionary(data, {
@@ -364,7 +364,7 @@ def test_serialize_very_detailed(app, authed_client):
 
 
 def test_serialize_nested(app, authed_client):
-    add_permissions(app, 'modify_forum_threads_advanced')
+    add_permissions(app, 'forums_threads_modify_advanced')
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder()._objects_to_dict(thread.serialize(nested=True))
     check_dictionary(data, {

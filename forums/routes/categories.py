@@ -17,7 +17,7 @@ VIEW_FORUM_CATEGORY_SCHEMA = Schema({
 
 
 @bp.route('/forums/categories', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view')
 @validate_data(VIEW_FORUM_CATEGORY_SCHEMA)
 def view_categories(include_dead: bool = False) -> flask.Response:
     """
@@ -45,7 +45,7 @@ def view_categories(include_dead: bool = False) -> flask.Response:
     :statuscode 401: View unsuccessful
     """
     categories = ForumCategory.get_all(
-        include_dead=include_dead and flask.g.user.has_permission('modify_forums'))
+        include_dead=include_dead and flask.g.user.has_permission('forums_forums_modify'))
     return flask.jsonify(categories)
 
 
@@ -57,13 +57,13 @@ ADD_FORUM_CATEGORY_SCHEMA = Schema({
 
 
 @bp.route('/forums/categories', methods=['POST'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 @validate_data(ADD_FORUM_CATEGORY_SCHEMA)
 def add_category(name: str,
                  description: str = None,
                  position: int = 0) -> flask.Response:
     """
-    This is the endpoint for forum category creation. The ``modify_forums`` permission
+    This is the endpoint for forum category creation. The ``forums_forums_modify`` permission
     is required to access this endpoint.
 
     .. :quickref: ForumCategory; Create a forum category.
@@ -109,14 +109,14 @@ MODIFY_FORUM_CATEGORY_SCHEMA = Schema({
 
 
 @bp.route('/forums/categories/<int:id>', methods=['PUT'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 @validate_data(MODIFY_FORUM_CATEGORY_SCHEMA)
 def edit_category(id: int,
                   name: str = None,
                   description: str = None,
                   position: int = None) -> flask.Response:
     """
-    This is the endpoint for forum category editing. The ``modify_forums`` permission
+    This is the endpoint for forum category editing. The ``forums_forums_modify`` permission
     is required to access this endpoint. The name, description, and position of a forum
     category can be changed here.
 
@@ -162,10 +162,10 @@ def edit_category(id: int,
 
 
 @bp.route('/forums/categories/<int:id>', methods=['DELETE'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 def delete_category(id: int) -> flask.Response:
     """
-    This is the endpoint for forum category deletion . The ``modify_forums`` permission
+    This is the endpoint for forum category deletion . The ``forums_forums_modify`` permission
     is required to access this endpoint. The category must have no forums assigned to it
     in order to delete it.
 

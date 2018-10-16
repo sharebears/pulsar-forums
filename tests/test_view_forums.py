@@ -7,7 +7,7 @@ from forums.models import Forum, ForumThread
 
 
 def test_view_forum(app, authed_client):
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view')
     response = authed_client.get('/forums/2')
     check_json_response(response, {
         'id': 2,
@@ -18,7 +18,7 @@ def test_view_forum(app, authed_client):
 
 
 def test_view_forum_deleted(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.get('/forums/3')
     check_json_response(response, {
         'id': 3,
@@ -28,28 +28,28 @@ def test_view_forum_deleted(app, authed_client):
 
 
 def test_view_forum_deleted_fail(app, authed_client):
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view')
     response = authed_client.get('/forums/3')
     check_json_response(response, 'Forum 3 does not exist.')
     assert response.status_code == 404
 
 
 def test_view_forum_threads_include_dead(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forum_threads_advanced')
+    add_permissions(app, 'forums_view', 'forums_threads_modify_advanced')
     response = authed_client.get('/forums/1', query_string={'include_dead': True})
     assert response.status_code == 200
     assert len(response.get_json()['response']['threads']) == 2
 
 
 def test_view_forum_threads_include_dead_no_perm(app, authed_client):
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view')
     response = authed_client.get('/forums/1', query_string={'include_dead': True})
     assert response.status_code == 200
     assert len(response.get_json()['response']['threads']) == 1
 
 
 def test_add_forum(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.post('/forums', data=json.dumps({
         'name': 'New Forum',
         'category_id': 1,
@@ -64,7 +64,7 @@ def test_add_forum(app, authed_client):
 
 
 def test_add_forum_nonexistent_category(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.post('/forums', data=json.dumps({
         'name': 'New Forum',
         'category_id': 100,
@@ -73,7 +73,7 @@ def test_add_forum_nonexistent_category(app, authed_client):
 
 
 def test_edit_forum(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.put('/forums/1', data=json.dumps({
         'name': 'Bite',
         'description': 'Very New Description',
@@ -94,7 +94,7 @@ def test_edit_forum(app, authed_client):
 
 
 def test_edit_forum_skips(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.put('/forums/1', data=json.dumps({
         'position': 0,
         }))
@@ -109,7 +109,7 @@ def test_edit_forum_skips(app, authed_client):
 
 
 def test_edit_forum_bad_category(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.put('/forums/1', data=json.dumps({
         'category_id': 100,
         }))
@@ -117,7 +117,7 @@ def test_edit_forum_bad_category(app, authed_client):
 
 
 def test_edit_forum_nonexistent(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.put('/forums/100', data=json.dumps({
         'category_id': 10000,
         }))
@@ -125,7 +125,7 @@ def test_edit_forum_nonexistent(app, authed_client):
 
 
 def test_delete_forum(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     sub_thread = ForumThread.from_pk(5)  # Cache - thread isn't deleted, belongs to category
     response = authed_client.delete('/forums/5')
     check_json_response(response, 'Forum 5 (Yacht Funding) has been deleted.')
@@ -136,7 +136,7 @@ def test_delete_forum(app, authed_client):
 
 
 def test_delete_forum_nonexistent(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forums')
+    add_permissions(app, 'forums_view', 'forums_forums_modify')
     response = authed_client.delete('/forums/100')
     check_json_response(response, 'Forum 100 does not exist.')
 

@@ -7,7 +7,7 @@ class ForumCategorySerializer(Serializer):
     description = Attribute()
     position = Attribute()
     forums = Attribute(nested=False)
-    deleted = Attribute(permission='modify_forums')
+    deleted = Attribute(permission='forums_forums_modify')
 
 
 class ForumSerializer(Serializer):
@@ -18,7 +18,7 @@ class ForumSerializer(Serializer):
     position = Attribute()
     thread_count = Attribute()
     threads = Attribute(nested=False)
-    deleted = Attribute(permission='modify_forums')
+    deleted = Attribute(permission='forums_forums_modify')
     last_updated_thread = Attribute()
 
 
@@ -36,8 +36,8 @@ class ForumThreadSerializer(Serializer):
     subscribed = Attribute()
     post_count = Attribute()
     posts = Attribute(nested=False)
-    thread_notes = Attribute(permission='modify_forum_threads')
-    deleted = Attribute(permission='modify_forum_threads_advanced')
+    thread_notes = Attribute(permission='forums_threads_modify')
+    deleted = Attribute(permission='forums_threads_modify_advanced')
 
 
 class ForumPostSerializer(Serializer):
@@ -49,22 +49,22 @@ class ForumPostSerializer(Serializer):
     edited_time = Attribute()
     sticky = Attribute()
     editor = Attribute()
-    deleted = Attribute(permission='modify_forum_posts_advanced', self_access=False)
-    edit_history = Attribute(permission='modify_forum_posts_advanced', self_access=False)
+    deleted = Attribute(permission='forums_posts_modify_advanced', self_access=False)
+    edit_history = Attribute(permission='forums_posts_modify_advanced', self_access=False)
 
 
 class ForumPostEditHistorySerializer(Serializer):
-    id = Attribute(permission='modify_forum_posts_advanced')
-    editor = Attribute(permission='modify_forum_posts_advanced')
-    contents = Attribute(permission='modify_forum_posts_advanced')
-    time = Attribute(permission='modify_forum_posts_advanced')
+    id = Attribute(permission='forums_posts_modify_advanced')
+    editor = Attribute(permission='forums_posts_modify_advanced')
+    contents = Attribute(permission='forums_posts_modify_advanced')
+    time = Attribute(permission='forums_posts_modify_advanced')
 
 
 class ForumThreadNoteSerializer(Serializer):
-    id = Attribute(permission='modify_forum_threads')
-    note = Attribute(permission='modify_forum_threads')
-    user = Attribute(nested=('id', 'username'), permission='modify_forum_threads')
-    time = Attribute(permission='modify_forum_threads')
+    id = Attribute(permission='forums_threads_modify')
+    note = Attribute(permission='forums_threads_modify')
+    user = Attribute(nested=('id', 'username'), permission='forums_threads_modify')
+    time = Attribute(permission='forums_threads_modify')
 
 
 class ForumPollSerializer(Serializer):

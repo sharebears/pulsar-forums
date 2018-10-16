@@ -59,6 +59,6 @@ def modify_core():
         )
 
     Config.BASIC_PERMISSIONS += [
-        'create_forum_posts',
-        'create_forum_threads',
+        'forums_posts_create',
+        'forums_threads_create',
         ]

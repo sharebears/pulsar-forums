@@ -12,7 +12,7 @@ from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
 
 
 def test_view_post(app, authed_client):
-    add_permissions(app, 'view_forums')
+    add_permissions(app, 'forums_view')
     response = authed_client.get('/forums/posts/1')
     check_json_response(response, {
         'id': 1,
@@ -22,7 +22,7 @@ def test_view_post(app, authed_client):
 
 
 def test_add_post(app, authed_client, monkeypatch):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     ForumThreadSubscription.user_ids_from_thread(1)  # cache it
     ForumThread.new_subscriptions(1)  # cache it
     monkeypatch.setattr('forums.models.ForumThreadSubscription.user_ids_from_thread',
@@ -43,7 +43,7 @@ def test_add_post(app, authed_client, monkeypatch):
 
 
 def test_add_post_locked(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     response = authed_client.post('/forums/posts', data=json.dumps({
         'thread_id': 3,
         'contents': 'hahe new forum post',
@@ -53,7 +53,7 @@ def test_add_post_locked(app, authed_client):
 
 def test_add_post_length_limit(app, authed_client, monkeypatch):
     with mock.patch('forums.routes.posts.len', lambda _: 200000):
-        add_permissions(app, 'view_forums', 'create_forum_posts')
+        add_permissions(app, 'forums_view', 'forums_posts_create')
         response = authed_client.post('/forums/posts', data=json.dumps({
             'thread_id': 5,
             'contents': 'hahe new forum post',
@@ -64,7 +64,7 @@ def test_add_post_length_limit(app, authed_client, monkeypatch):
 
 
 def test_add_post_double_post(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     response = authed_client.post('/forums/posts', data=json.dumps({
         'thread_id': 5,
         'contents': 'hahe new forum post',
@@ -77,8 +77,8 @@ def test_add_post_double_post(app, authed_client):
 
 
 def test_add_post_double_post_and_locked_override(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts', 'forum_double_post',
-                    'forums_post_in_locked_threads')
+    add_permissions(app, 'forums_view', 'forums_posts_create', 'forums_posts_double',
+                    'forums_post_in_locked')
     response = authed_client.post('/forums/posts', data=json.dumps({
         'thread_id': 3,
         'contents': 'hahe new forum post',
@@ -91,7 +91,7 @@ def test_add_post_double_post_and_locked_override(app, authed_client):
 
 
 def test_add_post_nonexistent_thread(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     response = authed_client.post('/forums/posts', data=json.dumps({
         'thread_id': 100,
         'contents': 'New Post',
@@ -100,7 +100,7 @@ def test_add_post_nonexistent_thread(app, authed_client):
 
 
 def test_edit_post_self(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     response = authed_client.put('/forums/posts/8', data=json.dumps({
         'contents': 'New site, yeah!',
         }))
@@ -120,7 +120,7 @@ def test_edit_post_self(app, authed_client):
 
 
 def test_edit_post_other_and_history(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts', 'modify_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create', 'forums_posts_modify')
     response = authed_client.put('/forums/posts/7', data=json.dumps({
         'contents': 'snipped',
         }))
@@ -140,7 +140,7 @@ def test_edit_post_other_and_history(app, authed_client):
 
 
 def test_edit_post_other_no_contents_mod_advanced_locked_override(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts', 'modify_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create', 'forums_posts_modify')
     response = authed_client.put('/forums/posts/2', data=json.dumps({
         'sticky': True,
         }))
@@ -156,7 +156,7 @@ def test_edit_post_other_no_contents_mod_advanced_locked_override(app, authed_cl
 
 
 def test_edit_post_locked_thread(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create')
     response = authed_client.put('/forums/posts/2', data=json.dumps({
         'sticky': True,
         }))
@@ -164,7 +164,7 @@ def test_edit_post_locked_thread(app, authed_client):
 
 
 def test_edit_post_deleted_thread(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts', 'modify_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create', 'forums_posts_modify')
     response = authed_client.put('/forums/posts/1', data=json.dumps({
         'sticky': True,
         }))
@@ -172,7 +172,7 @@ def test_edit_post_deleted_thread(app, authed_client):
 
 
 def test_edit_post_nonexistent(app, authed_client):
-    add_permissions(app, 'view_forums', 'create_forum_posts', 'modify_forum_posts')
+    add_permissions(app, 'forums_view', 'forums_posts_create', 'forums_posts_modify')
     response = authed_client.put('/forums/posts/100', data=json.dumps({
         'sticky': True,
         }))
@@ -180,7 +180,7 @@ def test_edit_post_nonexistent(app, authed_client):
 
 
 def test_delete_post(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forum_posts_advanced')
+    add_permissions(app, 'forums_view', 'forums_posts_modify_advanced')
     response = authed_client.delete('/forums/posts/1')
     check_json_response(response, 'ForumPost 1 has been deleted.')
     post = ForumPost.from_pk(1, include_dead=True)
@@ -188,7 +188,7 @@ def test_delete_post(app, authed_client):
 
 
 def test_delete_post_nonexistent(app, authed_client):
-    add_permissions(app, 'view_forums', 'modify_forum_posts_advanced')
+    add_permissions(app, 'forums_view', 'forums_posts_modify_advanced')
     response = authed_client.delete('/forums/posts/100')
     check_json_response(response, 'ForumPost 100 does not exist.')
 

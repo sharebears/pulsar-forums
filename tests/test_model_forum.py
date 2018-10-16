@@ -144,7 +144,7 @@ def test_serialize_no_perms(app, authed_client):
 
 
 def test_serialize_very_detailed(app, authed_client):
-    add_permissions(app, 'modify_forums')
+    add_permissions(app, 'forums_forums_modify')
     forum = Forum.from_pk(1)
     data = NewJSONEncoder().default(forum)
     check_dictionary(data, {
@@ -160,7 +160,7 @@ def test_serialize_very_detailed(app, authed_client):
 
 
 def test_serialize_nested(app, authed_client):
-    add_permissions(app, 'modify_forums')
+    add_permissions(app, 'forums_forums_modify')
     forum = Forum.from_pk(1)
     data = forum.serialize(nested=True)
     check_dictionary(data, {

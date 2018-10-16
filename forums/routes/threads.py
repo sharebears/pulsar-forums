@@ -20,7 +20,7 @@ VIEW_FORUM_THREAD_SCHEMA = Schema({
 
 
 @bp.route('/forums/threads/<int:id>', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view')
 @validate_data(VIEW_FORUM_THREAD_SCHEMA)
 def view_thread(id: int,
                 page: int = 1,
@@ -64,11 +64,11 @@ def view_thread(id: int,
     thread = ForumThread.from_pk(
         id,
         _404=True,
-        include_dead=flask.g.user.has_permission('modify_forum_threads_advanced'))
+        include_dead=flask.g.user.has_permission('forums_threads_modify_advanced'))
     thread.set_posts(
         page,
         limit,
-        include_dead and flask.g.user.has_permission('modify_forum_posts_advanced'))
+        include_dead and flask.g.user.has_permission('forums_posts_modify_advanced'))
     return flask.jsonify(thread)
 
 
@@ -79,12 +79,12 @@ CREATE_FORUM_THREAD_SCHEMA = Schema({
 
 
 @bp.route('/forums/threads', methods=['POST'])
-@require_permission('create_forum_threads')
+@require_permission('forums_threads_create')
 @validate_data(CREATE_FORUM_THREAD_SCHEMA)
 def create_thread(topic: str,
                   forum_id: int) -> flask.Response:
     """
-    This is the endpoint for forum thread creation. The ``modify_forum_threads``
+    This is the endpoint for forum thread creation. The ``forums_threads_modify``
     permission is required to access this endpoint.
 
     .. :quickref: ForumThread; Create a forum thread.
@@ -152,7 +152,7 @@ MODIFY_FORUM_THREAD_SCHEMA = Schema({
 
 
 @bp.route('/forums/threads/<int:id>', methods=['PUT'])
-@require_permission('modify_forum_threads')
+@require_permission('forums_threads_modify')
 @validate_data(MODIFY_FORUM_THREAD_SCHEMA)
 def modify_thread(id: int,
                   topic: str = None,
@@ -160,7 +160,7 @@ def modify_thread(id: int,
                   locked: bool = None,
                   sticky: bool = None) -> flask.Response:
     """
-    This is the endpoint for forum thread editing. The ``modify_forum_threads``
+    This is the endpoint for forum thread editing. The ``forums_threads_modify``
     permission is required to access this endpoint. The topic, forum_id,
     locked, and sticky attributes can be changed here.
 
@@ -217,10 +217,10 @@ def modify_thread(id: int,
 
 
 @bp.route('/forums/threads/<int:id>', methods=['DELETE'])
-@require_permission('modify_forum_threads_advanced')
+@require_permission('forums_threads_modify_advanced')
 def delete_thread(id: int) -> flask.Response:
     """
-    This is the endpoint for forum thread deletion . The ``modify_forum_threads_advanced``
+    This is the endpoint for forum thread deletion . The ``forums_threads_modify_advanced``
     permission is required to access this endpoint. All posts in a deleted forum will also
     be deleted.
 
@@ -269,12 +269,12 @@ ADD_FORUM_THREAD_NOTE_SCHEMA = Schema({
 
 
 @bp.route('/forums/threads/<int:id>/notes', methods=['POST'])
-@require_permission('modify_forum_threads')
+@require_permission('forums_threads_modify')
 @validate_data(ADD_FORUM_THREAD_NOTE_SCHEMA)
 def add_thread_note(id: int,
                     note: str) -> flask.Response:
     """
-    Endpoint for forum thread note creation. Limited to those with ``modify_forum_threads``
+    Endpoint for forum thread note creation. Limited to those with ``forums_threads_modify``
     permission.
 
     .. :quickref: ForumThreadNote; Add a forum thread note.

@@ -8,10 +8,10 @@ from . import bp
 
 
 @bp.route('/subscriptions/threads/<int:thread_id>', methods=['POST', 'DELETE'])
-@require_permission('modify_forum_subscriptions')
+@require_permission('forums_subscriptions_modify')
 def alter_thread_subscription(thread_id: int) -> flask.Response:
     """
-    This is the endpoint for forum thread subscription. The ``modify_forum_subscriptions``
+    This is the endpoint for forum thread subscription. The ``forums_subscriptions_modify``
     permission is required to access this endpoint. A POST request creates a subscription,
     whereas a DELETE request removes a subscription.
 
@@ -52,10 +52,10 @@ def alter_thread_subscription(thread_id: int) -> flask.Response:
 
 
 @bp.route('/subscriptions/forums/<int:forum_id>', methods=['POST', 'DELETE'])
-@require_permission('modify_forum_subscriptions')
+@require_permission('forums_subscriptions_modify')
 def alter_forum_subscription(forum_id: int) -> flask.Response:
     """
-    This is the endpoint for forum subscription. The ``modify_forum_subscriptions``
+    This is the endpoint for forum subscription. The ``forums_subscriptions_modify``
     permission is required to access this endpoint. A POST request creates a subscription,
     whereas a DELETE request removes a subscription.
 

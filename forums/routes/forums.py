@@ -22,7 +22,7 @@ VIEW_FORUM_SCHEMA = Schema({
 
 
 @bp.route('/forums/<int:id>', methods=['GET'])
-@require_permission('view_forums')
+@require_permission('forums_view')
 @validate_data(VIEW_FORUM_SCHEMA)
 def view_forum(id: int,
                page: int = 1,
@@ -54,11 +54,11 @@ def view_forum(id: int,
     forum = Forum.from_pk(
         id,
         _404=True,
-        include_dead=flask.g.user.has_permission('modify_forums'))
+        include_dead=flask.g.user.has_permission('forums_forums_modify'))
     forum.set_threads(
         page,
         limit,
-        include_dead and flask.g.user.has_permission('modify_forum_threads_advanced'))
+        include_dead and flask.g.user.has_permission('forums_threads_modify_advanced'))
     return flask.jsonify(forum)
 
 
@@ -71,14 +71,14 @@ CREATE_FORUM_SCHEMA = Schema({
 
 
 @bp.route('/forums', methods=['POST'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 @validate_data(CREATE_FORUM_SCHEMA)
 def create_forum(name: str,
                  category_id: int,
                  description: str = None,
                  position: int = 0) -> flask.Response:
     """
-    This is the endpoint for forum creation. The ``modify_forums`` permission
+    This is the endpoint for forum creation. The ``forums_forums_modify`` permission
     is required to access this endpoint.
 
     .. :quickref: Forum; Create a forum.
@@ -126,7 +126,7 @@ MODIFY_FORUM_SCHEMA = Schema({
 
 
 @bp.route('/forums/<int:id>', methods=['PUT'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 @validate_data(MODIFY_FORUM_SCHEMA)
 def modify_forum(id: int,
                  name: Optional_[str] = None,
@@ -134,7 +134,7 @@ def modify_forum(id: int,
                  description: Union[str, bool, None] = False,
                  position: Optional_[int] = None) -> flask.Response:
     """
-    This is the endpoint for forum editing. The ``modify_forums`` permission
+    This is the endpoint for forum editing. The ``forums_forums_modify`` permission
     is required to access this endpoint. The name, category, description,
     and position of a forum can be changed here.
 
@@ -183,10 +183,10 @@ def modify_forum(id: int,
 
 
 @bp.route('/forums/<int:id>', methods=['DELETE'])
-@require_permission('modify_forums')
+@require_permission('forums_forums_modify')
 def delete_forum(id: int) -> flask.Response:
     """
-    This is the endpoint for forum deletion . The ``modify_forums`` permission
+    This is the endpoint for forum deletion . The ``forums_forums_modify`` permission
     is required to access this endpoint. All threads in a deleted forum will also
     be deleted.
 
