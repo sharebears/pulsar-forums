@@ -31,7 +31,7 @@ def test_forum_permission_dict_failure(value):
 
 def test_change_forum_permissions(app, authed_client):
     db.engine.execute('DELETE FROM users_permissions')
-    add_permissions(app, 'moderate_users', 'forumaccess_forum_1', 'forumaccess_thread_1')
+    add_permissions(app, 'users_moderate', 'forumaccess_forum_1', 'forumaccess_thread_1')
     db.engine.execute("""UPDATE user_classes
                       SET permissions = '{"forumaccess_forum_2"}'""")
 
@@ -55,7 +55,7 @@ def test_change_forum_permissions(app, authed_client):
 
 def test_change_forum_permissions_failure(app, authed_client):
     db.engine.execute('DELETE FROM users_permissions')
-    add_permissions(app, 'moderate_users', 'forumaccess_thread_1')
+    add_permissions(app, 'users_moderate', 'forumaccess_thread_1')
     db.engine.execute("""UPDATE user_classes
                       SET permissions = '{"forumaccess_forum_2"}'""")
 

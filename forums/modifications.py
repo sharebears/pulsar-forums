@@ -52,7 +52,7 @@ def modify_core():
         forum_permissions=forum_permissions,
         )
     UserSerializer.assign_attrs(
-        forum_permissions=Attribute(permission='moderate_users', nested=False),
+        forum_permissions=Attribute(permission='users_moderate', nested=False),
         )
     UserPermission.assign_attrs(
         is_valid_permission=is_valid_permission,
@@ -62,6 +62,3 @@ def modify_core():
         'create_forum_posts',
         'create_forum_threads',
         ]
-
-    from forums import PERMISSIONS
-    UserPermission.all_permissions += PERMISSIONS
