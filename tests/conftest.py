@@ -90,18 +90,17 @@ def populate_db_(app, client):
 
     add_permissions(
         app,
-        'forums_forums_permission_1',
-        'forums_forums_permission_2',
-        'forums_forums_permission_3',
-        'forums_forums_permission_4',
-        'forums_forums_permission_5',
-        'forums_forums_permission_6',
-        'forums_threads_permission_1',
-        'forums_threads_permission_2',
-        'forums_threads_permission_3',
-        'forums_threads_permission_4',
-        'forums_threads_permission_5',
-        table='forums_permissions'
+        'forumaccess_forum_1',
+        'forumaccess_forum_2',
+        'forumaccess_forum_3',
+        'forumaccess_forum_4',
+        'forumaccess_forum_5',
+        'forumaccess_forum_6',
+        'forumaccess_thread_1',
+        'forumaccess_thread_2',
+        'forumaccess_thread_3',
+        'forumaccess_thread_4',
+        'forumaccess_thread_5',
         )
 
 

@@ -25,24 +25,24 @@ def test_thread_from_pk_deleted(app, authed_client):
 
 
 def test_thread_no_permissions(app, authed_client):
-    db.session.execute("DELETE FROM forums_permissions")
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
     with pytest.raises(_403Exception):
         ForumThread.from_pk(1, error=True)
 
 
 def test_thread_can_access_implicit_forum(app, authed_client):
-    db.session.execute("DELETE FROM forums_permissions")
-    add_permissions(app, 'forums_forums_permission_1')
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    add_permissions(app, 'forumaccess_forum_1')
     thread = ForumThread.from_pk(1)
     assert thread.id == 1
     assert thread.topic == 'New Site'
 
 
 def test_thread_can_access_explicit_disallow(app, authed_client):
-    db.session.execute("DELETE FROM forums_permissions")
-    add_permissions(app, 'forums_forums_permission_1')
-    db.session.execute("""INSERT INTO forums_permissions (user_id, permission, granted)
-                       VALUES (1, 'forums_threads_permission_1', 'f')""")
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    add_permissions(app, 'forumaccess_forum_1')
+    db.session.execute("""INSERT INTO users_permissions (user_id, permission, granted)
+                       VALUES (1, 'forumaccess_thread_1', 'f')""")
     with pytest.raises(_403Exception):
         ForumThread.from_pk(1, error=True)
 
@@ -68,7 +68,7 @@ def test_thread_get_from_forum(app, authed_client):
 
 
 def test_thread_get_from_forum_no_perms(app, authed_client):
-    db.session.execute("DELETE FROM forums_permissions")
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
     threads = ForumThread.from_forum(1, page=1, limit=50)
     assert len(threads) == 0
 
@@ -232,7 +232,7 @@ def test_add_thread_note_nonexistent_thread(app, authed_client):
 
 
 def test_add_thread_note_no_permissions(app, authed_client):
-    db.engine.execute("DELETE FROM forums_permissions")
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
     add_permissions(app, 'modify_forum_threads')
     response = authed_client.post('/forums/threads/1/notes', data=json.dumps({
         'note': 'ANotherNote',

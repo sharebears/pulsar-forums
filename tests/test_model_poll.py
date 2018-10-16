@@ -93,9 +93,9 @@ def test_poll_answer_invalid_data(app, authed_client, poll_id, user_id, choice_i
 
 
 def test_poll_no_permissions(app, authed_client):
-    db.engine.execute("""DELETE FROM forums_permissions
-                      WHERE permission = 'forums_forums_permission_2'""")
-    db.engine.execute("""DELETE FROM forums_permissions
-                      WHERE permission = 'forums_threads_permission_3'""")
+    db.engine.execute("""DELETE FROM users_permissions
+                      WHERE permission = 'forumaccess_forum_2'""")
+    db.engine.execute("""DELETE FROM users_permissions
+                      WHERE permission = 'forumaccess_thread_3'""")
     with pytest.raises(_403Exception):
         ForumPoll.from_pk(3, error=True)

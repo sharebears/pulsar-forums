@@ -75,21 +75,21 @@ def test_view_forum_subscriptions_empty(app, authed_client):
 
 
 def test_view_thread_subscriptions_empty(app, authed_client):
-    db.engine.execute("DELETE FROM forums_threads_subscriptions")
+    db.engine.execute("DELETE FROM users_permissions")
     add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/threads').get_json()['response']
     assert response == []
 
 
 def test_view_forum_subscriptions_no_forum_perms(app, authed_client):
-    db.engine.execute("DELETE FROM forums_permissions")
+    db.engine.execute("DELETE FROM users_permissions")
     add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/forums').get_json()['response']
     assert response == []
 
 
 def test_view_thread_subscriptions_no_forum_perms(app, authed_client):
-    db.engine.execute("DELETE FROM forums_permissions")
+    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
     add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/threads').get_json()['response']
     assert response == []

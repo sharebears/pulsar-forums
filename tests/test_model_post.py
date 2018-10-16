@@ -100,7 +100,6 @@ def test_post_edit_history_from_cache(app, authed_client):
 
 
 def test_serialize_no_perms(app, authed_client):
-    add_permissions(app, 'forums_threads_permission_3')
     post = ForumPost.from_pk(2)
     data = NewJSONEncoder().default(post)
     check_dictionary(data, {

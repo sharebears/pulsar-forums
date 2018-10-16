@@ -9,7 +9,7 @@ from sqlalchemy.sql.elements import BinaryExpression
 
 from core import APIException, _403Exception, cache, db
 from core.mixins import MultiPKMixin, SinglePKMixin
-from core.permissions.models import ForumPermission
+from core.permissions.models import UserPermission
 from core.users.models import User
 from core.utils import cached_property
 from forums.serializers import (ForumCategorySerializer, ForumPollChoiceSerializer,
@@ -63,7 +63,7 @@ class Forum(db.Model, SinglePKMixin):
     __cache_key_last_updated__ = 'forums_{id}_last_updated'
     __cache_key_thread_count__ = 'forums_{id}_thread_count'
     __cache_key_of_category__ = 'forums_forums_of_categories_{id}'
-    __permission_key__ = 'forums_forums_permission_{id}'
+    __permission_key__ = 'forumaccess_forum_{id}'
     __deletion_attr__ = 'deleted'
 
     _threads: List['ForumThread']
@@ -169,7 +169,7 @@ class ForumThread(db.Model, SinglePKMixin):
     __cache_key_post_count__ = 'forums_threads_{id}_post_count'
     __cache_key_of_forum__ = 'forums_threads_forums_{id}'
     __cache_key_last_post__ = 'forums_threads_{id}_last_post'
-    __permission_key__ = 'forums_threads_permission_{id}'
+    __permission_key__ = 'forumaccess_thread_{id}'
     __deletion_attr__ = 'deleted'
 
     _posts: List['ForumPost']
@@ -332,7 +332,11 @@ class ForumThread(db.Model, SinglePKMixin):
 
         # Access to forum gives access to all threads by default.
         # If user has been ungranted the thread, they cannot view it regardless.
-        ungranted_threads = ForumPermission.get_ungranted_from_user(flask.g.user.id)
+        ungranted_threads = [
+            p for p, g in UserPermission.from_user(
+                flask.g.user.id, prefix='forumaccess_thread').items()
+            if g is False
+            ]
         if permission_key not in ungranted_threads and (
                 flask.g.user.has_permission(Forum.__permission_key__.format(id=self.forum_id))):
             return True
@@ -644,7 +648,7 @@ class ForumPoll(db.Model, SinglePKMixin):
 
     @classmethod
     def unfeature_existing(cls) -> None:
-        poll = ForumPoll.get_featured()
+        poll = cls.get_featured()
         if poll:
             poll.featured = False
             db.session.commit()
