@@ -1,3 +1,4 @@
+import re
 from typing import List
 
 from core import Config
@@ -9,12 +10,15 @@ from forums.models import ForumPost, ForumThread
 from core.permissions.models import UserPermission
 
 
+old_is_valid_permission = UserPermission.is_valid_permission
+
+
 @classmethod
 def is_valid_permission(cls,
                         permission: str,
                         permissioned: bool = True) -> bool:
-    if not cls.is_valid_permission(permission, permissioned):
-        return any(permission.startswith(f'forumaccess_{t}') for t in ['forum', 'thread'])
+    if not old_is_valid_permission(permission, permissioned):
+        return any(re.match(f'forumaccess_{t}_\d+$', permission) for t in ['forum', 'thread'])
     return True
 
 

@@ -42,11 +42,10 @@ def test_change_forum_permissions(app, authed_client):
             'forumaccess_thread_2': True
         }})).get_json()
 
-    print(response['response'])
     assert set(response['response']['forum_permissions']) == {
         'forumaccess_forum_1', 'forumaccess_thread_2'}
 
-    f_perms = UserPermission.from_user(1)
+    f_perms = UserPermission.from_user(1, prefix='forumaccess')
     assert f_perms == {
         'forumaccess_forum_2': False,
         'forumaccess_forum_1': True,
@@ -69,7 +68,7 @@ def test_change_forum_permissions_failure(app, authed_client):
         }}))
 
     check_json_response(
-        response, 'The following ForumPermissions could not be added: forumaccess_forum_2. '
-        'The following ForumPermissions could not be deleted: forumaccess_thread_4.')
-    f_perms = UserPermission.from_user(1)
+        response, 'The following permissions could not be added: forumaccess_forum_2. '
+        'The following permissions could not be deleted: forumaccess_thread_4.')
+    f_perms = UserPermission.from_user(1, prefix='forumaccess')
     assert f_perms == {'forumaccess_thread_1': True}
