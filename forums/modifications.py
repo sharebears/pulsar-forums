@@ -1,25 +1,13 @@
 import re
-from typing import List
+from typing import Set
 
 from core import Config
 from core.mixins import Attribute
+from core.permissions import Permissions
 from core.users.models import User
 from core.users.serializers import UserSerializer
 from core.utils import cached_property
 from forums.models import ForumPost, ForumThread
-from core.permissions.models import UserPermission
-
-
-old_is_valid_permission = UserPermission.is_valid_permission
-
-
-@classmethod
-def is_valid_permission(cls,
-                        permission: str,
-                        permissioned: bool = True) -> bool:
-    if not old_is_valid_permission(permission, permissioned):
-        return any(re.match(f'forumaccess_{t}_\d+$', permission) for t in ['forum', 'thread'])
-    return True
 
 
 @cached_property
@@ -39,7 +27,7 @@ def forum_thread_count(self) -> int:
 
 
 @cached_property
-def forum_permissions(self) -> List[str]:
+def forum_permissions(self) -> Set[str]:
     return {p for p in self.permissions if p.startswith('forumaccess')}
 
 
@@ -54,10 +42,10 @@ def modify_core():
     UserSerializer.assign_attrs(
         forum_permissions=Attribute(permission='users_moderate', nested=False),
         )
-    UserPermission.assign_attrs(
-        is_valid_permission=is_valid_permission,
-        )
-
+    Permissions.permission_regexes['basic'] += [
+        re.compile('forumaccess_forum_\d+$'),
+        re.compile('forumaccess_thread_\d+$'),
+        ]
     Config.BASIC_PERMISSIONS += [
         'forums_posts_create',
         'forums_threads_create',

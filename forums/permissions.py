@@ -1,7 +1,7 @@
-from core.mixins import Permission
+from core.permissions import PermissionsEnum
 
 
-class ForumPermissions(Permission):
+class ForumPermissions(PermissionsEnum):
     VIEW = 'forums_view'
     CREATE_POST = 'forums_posts_create'
     MODIFY_POST = 'forums_posts_modify'

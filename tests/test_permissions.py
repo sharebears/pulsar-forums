@@ -42,6 +42,7 @@ def test_change_forum_permissions(app, authed_client):
             'forumaccess_thread_2': True
         }})).get_json()
 
+    print(response['response'])
     assert set(response['response']['forum_permissions']) == {
         'forumaccess_forum_1', 'forumaccess_thread_2'}
 
