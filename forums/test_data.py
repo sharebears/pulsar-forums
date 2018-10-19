@@ -1,5 +1,5 @@
-from core.mixins import TestDataPopulator
 from core import db
+from core.mixins import TestDataPopulator
 
 
 class ForumsPopulator(TestDataPopulator):
