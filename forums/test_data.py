@@ -25,7 +25,7 @@ class ForumsPopulator(TestDataPopulator):
         db.session.execute("ALTER SEQUENCE forums_id_seq RESTART WITH 7")
         db.session.execute(
             """INSERT INTO forums_threads (
-                id, topic, forum_id, poster_id, locked, sticky, deleted) VALUES
+                id, topic, forum_id, creator_id, locked, sticky, deleted) VALUES
             (1, 'New Site', 1, 1, 'f', 'f', 'f'),
             (2, 'New Site Borked', 1, 1, 't', 'f', 't'),
             (3, 'Using PHP', 2, 2, 't', 't', 'f'),

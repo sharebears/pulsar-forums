@@ -178,7 +178,7 @@ class ForumThread(db.Model, SinglePKMixin):
     topic: str = db.Column(db.String(150), nullable=False)
     forum_id = db.Column(
         db.Integer, db.ForeignKey('forums.id'), nullable=False, index=True)  # type: int
-    poster_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    creator_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     created_time: datetime = db.Column(
         db.DateTime(timezone=True), nullable=False, server_default=func.now())
     locked: bool = db.Column(db.Boolean, nullable=False, server_default='f')
@@ -207,14 +207,14 @@ class ForumThread(db.Model, SinglePKMixin):
     def new(cls,
             topic: str,
             forum_id: int,
-            poster_id: int) -> Optional['ForumThread']:
+            creator_id: int) -> Optional['ForumThread']:
         Forum.is_valid(forum_id, error=True)
-        User.is_valid(poster_id, error=True)
+        User.is_valid(creator_id, error=True)
         cache.delete(cls.__cache_key_of_forum__.format(id=forum_id))
         return super()._new(
             topic=topic,
             forum_id=forum_id,
-            poster_id=poster_id)
+            creator_id=creator_id)
 
     @classmethod
     def get_ids_from_forum(cls, id):
@@ -281,8 +281,8 @@ class ForumThread(db.Model, SinglePKMixin):
         return Forum.from_pk(self.forum_id)
 
     @cached_property
-    def poster(self) -> User:
-        return User.from_pk(self.poster_id)
+    def creator(self) -> User:
+        return User.from_pk(self.creator_id)
 
     @cached_property
     def poll(self) -> 'ForumPoll':
@@ -404,7 +404,7 @@ class ForumPost(db.Model, SinglePKMixin):
         return ForumThread.from_pk(self.thread_id)
 
     @cached_property
-    def poster(self) -> User:
+    def user(self) -> User:
         return User.from_pk(self.poster_id)
 
     @cached_property

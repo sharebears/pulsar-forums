@@ -90,22 +90,22 @@ def test_new_thread(app, authed_client):
     thread = ForumThread.new(
         topic='NewForumThread',
         forum_id=2,
-        poster_id=1)
+        creator_id=1)
     assert thread.topic == 'NewForumThread'
     assert thread.forum_id == 2
-    assert thread.poster_id == 1
+    assert thread.creator_id == 1
     assert ForumThread.from_cache(thread.cache_key).id == thread.id == 6
 
 
 @pytest.mark.parametrize(
-    'forum_id, poster_id', [
+    'forum_id, creator_id', [
         (10, 1), (3, 1), (1, 6)])
-def test_new_thread_failure(app, authed_client, forum_id, poster_id):
+def test_new_thread_failure(app, authed_client, forum_id, creator_id):
     with pytest.raises(APIException):
         ForumThread.new(
             topic='NewForumThread',
             forum_id=forum_id,
-            poster_id=poster_id)
+            creator_id=creator_id)
 
 
 @pytest.mark.parametrize(
@@ -299,7 +299,7 @@ def test_serialize_no_perms(app, authed_client):
         'subscribed': True
         })
     assert 'forum' in data and data['forum']['id'] == 2
-    assert 'poster' in data and data['poster']['id'] == 2
+    assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
     assert ('posts' in data
@@ -322,7 +322,7 @@ def test_serialize_detailed(app, authed_client):
         'subscribed': True,
         })
     assert 'forum' in data and data['forum']['id'] == 2
-    assert 'poster' in data and data['poster']['id'] == 2
+    assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
     assert ('posts' in data
@@ -349,7 +349,7 @@ def test_serialize_very_detailed(app, authed_client):
         'subscribed': True,
         })
     assert 'forum' in data and data['forum']['id'] == 2
-    assert 'poster' in data and data['poster']['id'] == 2
+    assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
     assert ('posts' in data
@@ -378,7 +378,7 @@ def test_serialize_nested(app, authed_client):
         })
     from pprint import pprint
     pprint(data)
-    assert 'poster' in data and data['poster']['id'] == 2
+    assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
     assert 'created_time' in data and isinstance(data['created_time'], int)

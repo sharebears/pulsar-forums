@@ -23,7 +23,7 @@ def forum_thread_count(self) -> int:
     return self.count(
         key=self.__cache_key_forum_thread_count__.format(id=self.id),
         attribute=ForumThread.id,
-        filter=ForumThread.poster_id == self.id)
+        filter=ForumThread.creator_id == self.id)
 
 
 @cached_property

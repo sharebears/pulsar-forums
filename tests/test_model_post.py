@@ -111,7 +111,7 @@ def test_serialize_no_perms(app, authed_client):
     assert ('thread' in data
             and data['thread']['id'] == 3
             and len([k for k, v in data['thread'].items() if v]) == 2)
-    assert 'poster' in data and data['poster']['id'] == 1
+    assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
 
@@ -128,7 +128,7 @@ def test_serialize_very_detailed(app, authed_client):
         'deleted': False,
         })
     assert 'thread' in data and data['thread'] is None
-    assert 'poster' in data and data['poster']['id'] == 1
+    assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
     assert ('edit_history' in data
@@ -147,7 +147,7 @@ def test_serialize_nested(app, authed_client):
         'editor': None,
         'deleted': False,
         })
-    assert 'poster' in data and data['poster']['id'] == 1
+    assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
     assert ('edit_history' in data

@@ -26,7 +26,7 @@ class ForumThreadSerializer(Serializer):
     id = Attribute()
     topic = Attribute()
     forum = Attribute(nested=('id', ))
-    poster = Attribute(nested=('id', 'username', ))
+    creator = Attribute(nested=('id', 'username', ))
     locked = Attribute()
     sticky = Attribute()
     created_time = Attribute()
@@ -43,7 +43,7 @@ class ForumThreadSerializer(Serializer):
 class ForumPostSerializer(Serializer):
     id = Attribute()
     thread = Attribute(nested=('id', 'topic', ))
-    poster = Attribute()
+    user = Attribute()
     contents = Attribute()
     time = Attribute()
     edited_time = Attribute()

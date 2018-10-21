@@ -125,7 +125,7 @@ def create_thread(topic: str,
     thread = ForumThread.new(
         topic=topic,
         forum_id=forum_id,
-        poster_id=flask.g.user.id)
+        creator_id=flask.g.user.id)
     subscribe_users_to_new_thread(thread)
     return flask.jsonify(thread)
 
