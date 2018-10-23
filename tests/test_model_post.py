@@ -51,22 +51,22 @@ def test_post_get_from_thread_cached(app, authed_client):
 def test_new_post(app, authed_client):
     post = ForumPost.new(
         thread_id=3,
-        poster_id=1,
+        user_id=1,
         contents='NewForumPost')
     assert post.thread_id == 3
-    assert post.poster_id == 1
+    assert post.user_id == 1
     assert post.contents == 'NewForumPost'
     assert ForumPost.from_cache(post.cache_key).id == post.id == 9
 
 
 @pytest.mark.parametrize(
-    'thread_id, poster_id', [
+    'thread_id, user_id', [
         (10, 1), (2, 1), (1, 6)])
-def test_new_post_failure(app, authed_client, thread_id, poster_id):
+def test_new_post_failure(app, authed_client, thread_id, user_id):
     with pytest.raises(APIException):
         assert ForumPost.new(
             thread_id=thread_id,
-            poster_id=poster_id,
+            user_id=user_id,
             contents='NewForumPost')
 
 

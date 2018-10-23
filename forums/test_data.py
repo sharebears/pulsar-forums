@@ -34,7 +34,7 @@ class ForumsPopulator(TestDataPopulator):
         db.session.execute("ALTER SEQUENCE forums_threads_id_seq RESTART WITH 6")
         db.session.execute(
             """INSERT INTO forums_posts (
-                id, thread_id, poster_id, contents, time, sticky, edited_user_id, deleted) VALUES
+                id, thread_id, user_id, contents, time, sticky, edited_user_id, deleted) VALUES
             (1, 2, 1, '!site New yeah', NOW() - INTERVAL '1 MINUTE', 't', NULL, 'f'),
             (2, 3, 1, 'Why the fuck is Gazelle in PHP?!', NOW(), 't', NULL, 'f'),
             (3, 5, 1, 'How do we increase donations?', NOW(), 't', NULL, 'f'),

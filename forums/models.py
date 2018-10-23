@@ -355,7 +355,7 @@ class ForumPost(db.Model, SinglePKMixin):
     id: int = db.Column(db.Integer, primary_key=True)
     thread_id: int = db.Column(
         db.Integer, db.ForeignKey('forums_threads.id'), nullable=False, index=True)
-    poster_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     contents: str = db.Column(db.Text, nullable=False)
     time: datetime = db.Column(
         db.DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -389,14 +389,14 @@ class ForumPost(db.Model, SinglePKMixin):
     def new(cls,
             *,
             thread_id: int,
-            poster_id: int,
+            user_id: int,
             contents: str) -> Optional['ForumPost']:
         ForumThread.is_valid(thread_id, error=True)
-        User.is_valid(poster_id, error=True)
+        User.is_valid(user_id, error=True)
         cache.delete(cls.__cache_key_of_thread__.format(id=thread_id))
         return super()._new(
             thread_id=thread_id,
-            poster_id=poster_id,
+            user_id=user_id,
             contents=contents)
 
     @cached_property
@@ -405,7 +405,7 @@ class ForumPost(db.Model, SinglePKMixin):
 
     @cached_property
     def user(self) -> User:
-        return User.from_pk(self.poster_id)
+        return User.from_pk(self.user_id)
 
     @cached_property
     def editor(self) -> Optional[User]:

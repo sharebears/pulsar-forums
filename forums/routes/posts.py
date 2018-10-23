@@ -91,7 +91,7 @@ def create_post(contents: str,
         raise APIException('You cannot post in a locked thread.')
     thread_last_post = thread.last_post
     if (thread_last_post
-            and thread_last_post.poster_id == flask.g.user.id
+            and thread_last_post.user_id == flask.g.user.id
             and not flask.g.user.has_permission('forums_posts_double')):
         if len(thread_last_post.contents) + len(contents) > 255997:
             raise APIException('Post could not be merged into previous post '
@@ -103,7 +103,7 @@ def create_post(contents: str,
 
     post = ForumPost.new(
         thread_id=thread_id,
-        poster_id=flask.g.user.id,
+        user_id=flask.g.user.id,
         contents=contents)
     ForumThreadSubscription.clear_cache_keys(thread_id=thread_id)
     return flask.jsonify(post)
@@ -155,7 +155,7 @@ def modify_post(id: int,
     :statuscode 404: Forum post does not exist
     """
     post = ForumPost.from_pk(id, _404=True)
-    assert_user(post.poster_id, 'forums_posts_modify')
+    assert_user(post.user_id, 'forums_posts_modify')
     thread = ForumThread.from_pk(post.thread_id)
     if not thread:
         raise APIException(f'ForumPost {id} does not exist.')
@@ -164,7 +164,7 @@ def modify_post(id: int,
     if contents is not None:
         ForumPostEditHistory.new(
             post_id=post.id,
-            editor_id=post.edited_user_id or post.poster_id,
+            editor_id=post.edited_user_id or post.user_id,
             contents=post.contents,
             time=datetime.utcnow().replace(tzinfo=pytz.utc))
         post.contents = contents

@@ -15,7 +15,7 @@ def forum_post_count(self) -> int:
     return self.count(
         key=self.__cache_key_forum_post_count__.format(id=self.id),
         attribute=ForumPost.id,
-        filter=ForumPost.poster_id == self.id)
+        filter=ForumPost.user_id == self.id)
 
 
 @cached_property
