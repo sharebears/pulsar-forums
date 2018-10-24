@@ -1,8 +1,10 @@
 import re
-from typing import List
+from typing import List, TYPE_CHECKING
 from core.notifications.models import Notification
 from core.users.models import User
-from forums.models import ForumPost
+
+if TYPE_CHECKING:
+    from core.forums.models import ForumPost  # noqa
 
 
 RE_QUOTE = re.compile(r'\[quote(?:=(.+)(?:\|.+)?)?\]|\[\/quote\]', flags=re.IGNORECASE)
@@ -12,7 +14,11 @@ RE_MENTION = re.compile(r'\[user\]([^ ]+)\[\/user\]|\[quote(?:=[^\]]+)?\]|\[\/qu
                         flags=re.IGNORECASE)
 
 
-def check_post_contents_for_quotes(post: ForumPost) -> None:
+def send_subscription_notices(post: 'ForumPost') -> None:
+    pass
+
+
+def check_post_contents_for_quotes(post: 'ForumPost') -> None:
     cur_nest_level = 0
     quoted_usernames: List[str] = []
     for match in RE_QUOTE.findall(post.contents):
@@ -26,7 +32,7 @@ def check_post_contents_for_quotes(post: ForumPost) -> None:
     _dispatch_notifications(post, type='forums_quoted', usernames=quoted_usernames)
 
 
-def check_post_contents_for_mentions(post: ForumPost) -> None:
+def check_post_contents_for_mentions(post: 'ForumPost') -> None:
     cur_nest_level = 0
     mentioned_usernames: List[str] = []
     for match in RE_MENTION.findall(post.contents):
@@ -40,7 +46,7 @@ def check_post_contents_for_mentions(post: ForumPost) -> None:
     _dispatch_notifications(post, type='forums_mentioned', usernames=mentioned_usernames)
 
 
-def _dispatch_notifications(post: ForumPost,
+def _dispatch_notifications(post: 'ForumPost',
                             type: str,
                             usernames: List[str]) -> None:
     for uname in usernames:

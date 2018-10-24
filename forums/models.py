@@ -12,6 +12,8 @@ from core.mixins import MultiPKMixin, SinglePKMixin
 from core.permissions.models import UserPermission
 from core.users.models import User
 from core.utils import cached_property
+from forums.notifications import (check_post_contents_for_quotes, check_post_contents_for_mentions,
+                                  send_subscription_notices)
 from forums.serializers import (ForumCategorySerializer, ForumPollChoiceSerializer,
                                 ForumPollSerializer, ForumPostEditHistorySerializer,
                                 ForumPostSerializer, ForumSerializer,
@@ -394,10 +396,14 @@ class ForumPost(db.Model, SinglePKMixin):
         ForumThread.is_valid(thread_id, error=True)
         User.is_valid(user_id, error=True)
         cache.delete(cls.__cache_key_of_thread__.format(id=thread_id))
-        return super()._new(
+        post = super()._new(
             thread_id=thread_id,
             user_id=user_id,
             contents=contents)
+        send_subscription_notices(post)
+        check_post_contents_for_quotes(post)
+        check_post_contents_for_mentions(post)
+        return post
 
     @cached_property
     def thread(self) -> 'ForumThread':
