@@ -6,7 +6,6 @@ import pytest
 import pytz
 
 from conftest import add_permissions, check_json_response
-from core import cache
 from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
                            ForumThreadSubscription)
 
@@ -23,12 +22,6 @@ def test_view_post(app, authed_client):
 
 def test_add_post(app, authed_client, monkeypatch):
     add_permissions(app, 'forums_view', 'forums_posts_create')
-    ForumThreadSubscription.user_ids_from_thread(1)  # cache it
-    ForumThread.new_subscriptions(1)  # cache it
-    monkeypatch.setattr('forums.models.ForumThreadSubscription.user_ids_from_thread',
-                        lambda *a, **k: [1])
-    assert cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=1))
-    assert cache.get(ForumThreadSubscription.__cache_key_active__.format(user_id=1))
     response = authed_client.post('/forums/posts', data=json.dumps({
         'thread_id': 1,
         'contents': 'hahe new forum post',
@@ -38,8 +31,6 @@ def test_add_post(app, authed_client, monkeypatch):
         'contents': 'hahe new forum post',
         })
     assert response.get_json()['response']['thread']['id'] == 1
-    assert not cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=1))
-    assert not cache.get(ForumThreadSubscription.__cache_key_active__.format(user_id=1))
 
 
 def test_add_post_locked(app, authed_client):

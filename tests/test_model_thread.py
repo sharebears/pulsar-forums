@@ -90,11 +90,14 @@ def test_new_thread(app, authed_client):
     thread = ForumThread.new(
         topic='NewForumThread',
         forum_id=2,
-        creator_id=1)
+        creator_id=1,
+        post_contents='aaaa')
     assert thread.topic == 'NewForumThread'
     assert thread.forum_id == 2
     assert thread.creator_id == 1
     assert ForumThread.from_cache(thread.cache_key).id == thread.id == 6
+    assert len(thread.posts) == 1
+    assert thread.posts[0].contents == 'aaaa'
 
 
 @pytest.mark.parametrize(
@@ -105,7 +108,8 @@ def test_new_thread_failure(app, authed_client, forum_id, creator_id):
         ForumThread.new(
             topic='NewForumThread',
             forum_id=forum_id,
-            creator_id=creator_id)
+            creator_id=creator_id,
+            post_contents='a')
 
 
 @pytest.mark.parametrize(
@@ -248,14 +252,7 @@ def test_thread_subscriptions(app, authed_client):
     threads = ForumThread.from_subscribed_user(1)
     assert all(t.id in {1, 3, 4} for t in threads)
     assert {1, 3, 4} == set(
-        cache.get(ForumThreadSubscription.__cache_key_of_users__.format(user_id=1)))
-
-
-def test_thread_subscriptions_active(app, authed_client):
-    threads = ForumThread.new_subscriptions(1)
-    assert {1, 4} == set(t.id for t in threads)
-    assert {1, 4} == set(
-        cache.get(ForumThreadSubscription.__cache_key_active__.format(user_id=1)))
+        cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1)))
 
 
 def test_user_ids_from_thread_subscription(app, authed_client):
@@ -265,26 +262,22 @@ def test_user_ids_from_thread_subscription(app, authed_client):
 
 def test_forum_thread_subscriptions_cache_keys_thread_id(app, authed_client):
     user_ids = ForumThreadSubscription.user_ids_from_thread(4)  # noqa
-    cache.set(ForumThreadSubscription.__cache_key_of_users__.format(user_id=1), [14, 23])
-    cache.set(ForumThreadSubscription.__cache_key_active__.format(user_id=1), [12, 28])
+    cache.set(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1), [14, 23])
     cache.set(ForumThreadSubscription.__cache_key_users__.format(thread_id=4), [3, 4, 5])
     assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
     ForumThreadSubscription.clear_cache_keys(thread_id=4)
     assert 2 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
-    assert not cache.has(ForumThreadSubscription.__cache_key_active__.format(user_id=1))
-    assert [14, 23] == cache.get(ForumThreadSubscription.__cache_key_of_users__.format(user_id=1))
+    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
 
 
 def test_forum_thread_subscriptions_cache_keys_user_ids(app, authed_client):
     user_ids = ForumThreadSubscription.user_ids_from_thread(4)  # noqa
-    cache.set(ForumThreadSubscription.__cache_key_of_users__.format(user_id=1), [14, 23])
-    cache.set(ForumThreadSubscription.__cache_key_active__.format(user_id=1), [12, 28])
+    cache.set(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1), [14, 23])
     cache.set(ForumThreadSubscription.__cache_key_users__.format(thread_id=4), [3, 4, 5])
     assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
     ForumThreadSubscription.clear_cache_keys(user_ids=[1, 2])
     assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
-    assert not cache.has(ForumThreadSubscription.__cache_key_active__.format(user_id=1))
-    assert not cache.get(ForumThreadSubscription.__cache_key_of_users__.format(user_id=1))
+    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
 
 
 def test_serialize_no_perms(app, authed_client):
@@ -376,8 +369,6 @@ def test_serialize_nested(app, authed_client):
         'post_count': 1,
         'subscribed': True,
         })
-    from pprint import pprint
-    pprint(data)
     assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2

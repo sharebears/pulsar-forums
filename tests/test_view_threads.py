@@ -51,12 +51,14 @@ def test_add_thread(app, authed_client):
     response = authed_client.post('/forums/threads', data=json.dumps({
         'topic': 'New Thread',
         'forum_id': 5,
+        'contents': 'aabb',
         }))
     check_json_response(response, {
         'id': 6,
         'topic': 'New Thread',
         })
     assert response.get_json()['response']['forum']['id'] == 5
+    assert response.get_json()['response']['posts'][0]['contents'] == 'aabb'
 
 
 def test_add_thread_nonexistent_category(app, authed_client):
@@ -64,22 +66,23 @@ def test_add_thread_nonexistent_category(app, authed_client):
     response = authed_client.post('/forums/threads', data=json.dumps({
         'topic': 'New Forum',
         'forum_id': 100,
+        'contents': 'aa',
         }))
     check_json_response(response, 'Invalid Forum id.')
 
 
 def test_add_thread_forum_subscriptions(app, authed_client):
     add_permissions(app, 'forums_view', 'forums_threads_create')
-    ForumThread.new_subscriptions(user_id=1)  # cache
+    ForumThread.from_subscribed_user(user_id=1)  # cache
     response = authed_client.post('/forums/threads', data=json.dumps({
         'topic': 'New Thread',
         'forum_id': 4,
+        'contents': 'aa',
         }))
     check_json_response(response, {'id': 6})
     assert response.get_json()['response']['forum']['id'] == 4
-    user_ids = ForumThreadSubscription.user_ids_from_thread(6)
-    assert {1, 2} == set(user_ids)
-    assert 6 in {t.id for t in ForumThread.new_subscriptions(user_id=1)}
+    assert {1, 2} == set(ForumThreadSubscription.user_ids_from_thread(6))
+    assert 6 in {t.id for t in ForumThread.from_subscribed_user(user_id=1)}
 
 
 def test_edit_thread(app, authed_client):

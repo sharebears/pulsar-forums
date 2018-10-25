@@ -4,8 +4,7 @@ from voluptuous import All, In, Length, Range, Schema
 from core import db
 from core.utils import require_permission, validate_data
 from core.validators import BoolGET
-from forums.models import (Forum, ForumPost, ForumSubscription, ForumThread,
-                           ForumThreadNote, ForumThreadSubscription)
+from forums.models import Forum, ForumPost, ForumThread, ForumThreadNote
 
 from . import bp
 
@@ -75,6 +74,7 @@ def view_thread(id: int,
 CREATE_FORUM_THREAD_SCHEMA = Schema({
     'topic': All(str, Length(max=150)),
     'forum_id': All(int, Range(min=0, max=2147483648)),
+    'contents': All(str, Length(max=250000)),
     }, required=True)
 
 
@@ -82,7 +82,8 @@ CREATE_FORUM_THREAD_SCHEMA = Schema({
 @require_permission('forums_threads_create')
 @validate_data(CREATE_FORUM_THREAD_SCHEMA)
 def create_thread(topic: str,
-                  forum_id: int) -> flask.Response:
+                  forum_id: int,
+                  contents: str) -> flask.Response:
     """
     This is the endpoint for forum thread creation. The ``forums_threads_modify``
     permission is required to access this endpoint.
@@ -122,25 +123,11 @@ def create_thread(topic: str,
     :statuscode 200: Creation successful
     :statuscode 400: Creation unsuccessful
     """
-    thread = ForumThread.new(
+    return flask.jsonify(ForumThread.new(
         topic=topic,
         forum_id=forum_id,
-        creator_id=flask.g.user.id)
-    subscribe_users_to_new_thread(thread)
-    return flask.jsonify(thread)
-
-
-def subscribe_users_to_new_thread(thread: ForumThread) -> None:
-    """
-    Subscribes all users subscribed to the parent forum to the new forum thread.
-
-    :param thread: The newly-created forum thread
-    """
-    user_ids = ForumSubscription.user_ids_from_forum(thread.forum_id)
-    db.session.bulk_save_objects([
-        ForumThreadSubscription(user_id=uid, thread_id=thread.id)
-        for uid in user_ids])
-    ForumThreadSubscription.clear_cache_keys(user_ids=user_ids)
+        creator_id=flask.g.user.id,
+        post_contents=contents))
 
 
 MODIFY_FORUM_THREAD_SCHEMA = Schema({

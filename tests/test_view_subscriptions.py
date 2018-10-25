@@ -1,6 +1,7 @@
 from conftest import add_permissions, check_json_response
-from core import db
-from forums.models import ForumSubscription, ForumThreadSubscription
+from core import cache, db
+from forums.models import Forum, ForumSubscription, ForumThread, ForumThreadSubscription
+from forums.permissions import ForumPermissions
 
 
 def test_subscribe_to_forum(app, authed_client):
@@ -93,3 +94,51 @@ def test_view_thread_subscriptions_no_forum_perms(app, authed_client):
     add_permissions(app, 'forums_view_subscriptions')
     response = authed_client.get('/subscriptions/threads').get_json()['response']
     assert response == []
+
+
+def test_subscribe_thread_deletes_cache_keys(app, authed_client):
+    add_permissions(app, ForumPermissions.MODIFY_SUBSCRIPTIONS)
+    ForumThread.from_subscribed_user(1)
+    ForumThreadSubscription.user_ids_from_thread(5)
+    response = authed_client.post('/subscriptions/threads/5')
+    assert response.status_code == 200
+    assert not cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=5))
+    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
+    assert ForumThreadSubscription.user_ids_from_thread(5) == [1]
+
+
+def test_unsubscribe_thread_deletes_cache_keys(app, authed_client):
+    add_permissions(app, ForumPermissions.MODIFY_SUBSCRIPTIONS)
+    ForumThread.from_subscribed_user(1)
+    ForumThreadSubscription.user_ids_from_thread(4)
+    assert cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4))
+    assert cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
+    response = authed_client.delete('/subscriptions/threads/4')
+    assert response.status_code == 200
+    assert not cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4))
+    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
+    assert ForumThreadSubscription.user_ids_from_thread(4) == [2]
+
+
+def test_subscribe_forum_deletes_cache_keys(app, authed_client):
+    add_permissions(app, ForumPermissions.MODIFY_SUBSCRIPTIONS)
+    Forum.from_subscribed_user(1)
+    ForumSubscription.user_ids_from_forum(5)
+    response = authed_client.post('/subscriptions/forums/5')
+    assert response.status_code == 200
+    assert not cache.get(ForumSubscription.__cache_key_users__.format(forum_id=5))
+    assert not cache.get(ForumSubscription.__cache_key_of_user__.format(user_id=1))
+    assert ForumSubscription.user_ids_from_forum(5) == [1]
+
+
+def test_unsubscribe_forum_deletes_cache_keys(app, authed_client):
+    add_permissions(app, ForumPermissions.MODIFY_SUBSCRIPTIONS)
+    Forum.from_subscribed_user(1)
+    ForumSubscription.user_ids_from_forum(4)
+    assert cache.get(ForumSubscription.__cache_key_users__.format(forum_id=4))
+    assert cache.get(ForumSubscription.__cache_key_of_user__.format(user_id=1))
+    response = authed_client.delete('/subscriptions/forums/4')
+    assert response.status_code == 200
+    assert not cache.get(ForumSubscription.__cache_key_users__.format(forum_id=4))
+    assert not cache.get(ForumSubscription.__cache_key_of_user__.format(user_id=1))
+    assert ForumSubscription.user_ids_from_forum(4) == [2]

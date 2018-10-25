@@ -1,6 +1,6 @@
 import flask
 
-from core import APIException, db
+from core import APIException, cache, db
 from core.utils import require_permission
 from forums.models import Forum, ForumSubscription, ForumThread, ForumThreadSubscription
 
@@ -48,6 +48,8 @@ def alter_thread_subscription(thread_id: int) -> flask.Response:
             raise APIException(f'You are not subscribed to thread {thread_id}.')
         db.session.delete(subscription)
         db.session.commit()
+        cache.delete(ForumThreadSubscription.__cache_key_users__.format(thread_id=thread_id))
+        cache.delete(ForumThreadSubscription.__cache_key_of_user__.format(user_id=flask.g.user.id))
         return flask.jsonify(f'Successfully unsubscribed from thread {thread_id}.')
 
 
@@ -92,6 +94,8 @@ def alter_forum_subscription(forum_id: int) -> flask.Response:
             raise APIException(f'You are not subscribed to forum {forum_id}.')
         db.session.delete(subscription)
         db.session.commit()
+        cache.delete(ForumSubscription.__cache_key_users__.format(forum_id=forum_id))
+        cache.delete(ForumSubscription.__cache_key_of_user__.format(user_id=flask.g.user.id))
         return flask.jsonify(f'Successfully unsubscribed from forum {forum_id}.')
 
 

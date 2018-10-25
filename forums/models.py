@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 import flask
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.elements import BinaryExpression
@@ -12,8 +12,10 @@ from core.mixins import MultiPKMixin, SinglePKMixin
 from core.permissions.models import UserPermission
 from core.users.models import User
 from core.utils import cached_property
-from forums.notifications import (check_post_contents_for_quotes, check_post_contents_for_mentions,
-                                  send_subscription_notices)
+from forums.notifications import (check_post_contents_for_mentions,
+                                  check_post_contents_for_quotes,
+                                  send_subscription_notices,
+                                  subscribe_users_to_new_thread)
 from forums.serializers import (ForumCategorySerializer, ForumPollChoiceSerializer,
                                 ForumPollSerializer, ForumPostEditHistorySerializer,
                                 ForumPostSerializer, ForumSerializer,
@@ -102,7 +104,7 @@ class Forum(db.Model, SinglePKMixin):
     @classmethod
     def from_subscribed_user(cls, user_id: int) -> List['Forum']:
         return cls.get_many(
-            key=ForumSubscription.__cache_key_of_users__.format(user_id=user_id),
+            key=ForumSubscription.__cache_key_of_user__.format(user_id=user_id),
             filter=cls.id.in_(db.session.query(ForumSubscription.forum_id)  # type: ignore
                               .filter(ForumSubscription.user_id == user_id)),
             order=Forum.id.asc())  # type: ignore
@@ -209,14 +211,21 @@ class ForumThread(db.Model, SinglePKMixin):
     def new(cls,
             topic: str,
             forum_id: int,
-            creator_id: int) -> Optional['ForumThread']:
+            creator_id: int,
+            post_contents: str) -> Optional['ForumThread']:
         Forum.is_valid(forum_id, error=True)
         User.is_valid(creator_id, error=True)
         cache.delete(cls.__cache_key_of_forum__.format(id=forum_id))
-        return super()._new(
+        thread = super()._new(
             topic=topic,
             forum_id=forum_id,
             creator_id=creator_id)
+        subscribe_users_to_new_thread(thread)
+        ForumPost.new(
+            thread_id=thread.id,
+            user_id=creator_id,
+            contents=post_contents)
+        return thread
 
     @classmethod
     def get_ids_from_forum(cls, id):
@@ -232,36 +241,14 @@ class ForumThread(db.Model, SinglePKMixin):
     @classmethod
     def subscribed_ids(cls, user_id: int) -> List[Union[str, int]]:
         return cls.get_pks_of_many(
-            key=ForumThreadSubscription.__cache_key_of_users__.format(user_id=user_id),
+            key=ForumThreadSubscription.__cache_key_of_user__.format(user_id=user_id),
             filter=cls.id.in_(db.session.query(ForumThreadSubscription.thread_id)  # type: ignore
                               .filter(ForumThreadSubscription.user_id == user_id)),
             order=ForumThread.id.asc())  # type: ignore
 
-    @classmethod
-    def new_subscriptions(cls, user_id: int) -> List['ForumThread']:
-        return cls.get_many(
-            key=ForumThreadSubscription.__cache_key_active__.format(user_id=user_id),
-            filter=and_(
-                (cls.id.in_(db.session.query(ForumThreadSubscription.thread_id)  # type: ignore
-                            .filter(ForumThreadSubscription.user_id == user_id))),
-                or_((cls.last_post_id > db.session.query(
-                    ForumLastViewedPost.post_id).filter(and_(
-                        ForumLastViewedPost.user_id == user_id,
-                        ForumLastViewedPost.thread_id == cls.id))),
-                    (db.session.query(
-                        ForumLastViewedPost.post_id).filter(and_(
-                            ForumLastViewedPost.user_id == user_id,
-                            ForumLastViewedPost.thread_id == cls.id)).as_scalar().is_(None)))
-                ),
-            order=cls.last_post_id.desc())
-
     @hybrid_property
     def last_updated(cls) -> BinaryExpression:
         return select([func.max(ForumPost.time)]).where(ForumPost.thread_id == cls.id).as_scalar()
-
-    @hybrid_property
-    def last_post_id(cls) -> BinaryExpression:
-        return select([func.max(ForumPost.id)]).where(ForumPost.thread_id == cls.id).as_scalar()
 
     @cached_property
     def last_post(self) -> Optional['ForumPost']:
@@ -497,7 +484,7 @@ class ForumLastViewedPost(db.Model):
 class ForumSubscription(db.Model, MultiPKMixin):
     __tablename__ = 'forums_forums_subscriptions'
     __cache_key_users__ = 'forums_forums_subscriptions_{forum_id}_users'
-    __cache_key_of_users__ = 'forums_forums_subscriptions_{user_id}'
+    __cache_key_of_user__ = 'forums_forums_subscriptions_{user_id}'
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     forum_id = db.Column(db.Integer, db.ForeignKey('forums.id'), primary_key=True)
@@ -509,26 +496,24 @@ class ForumSubscription(db.Model, MultiPKMixin):
             forum_id: int) -> Optional['ForumSubscription']:
         Forum.is_valid(forum_id, error=True)
         User.is_valid(user_id, error=True)
+        cache.delete(cls.__cache_key_users__.format(forum_id=forum_id))
+        cache.delete(cls.__cache_key_of_user__.format(user_id=user_id))
         return super()._new(
             user_id=user_id,
             forum_id=forum_id)
 
     @classmethod
     def user_ids_from_forum(cls, id: int) -> List[int]:
-        cache_key = cls.__cache_key_users__.format(forum_id=id)
-        user_ids = cache.get(cache_key)
-        if not user_ids:
-            user_ids = [
-                i for i, in db.session.query(cls.user_id).filter(cls.forum_id == id).all()]
-            cache.set(cache_key, user_ids)
-        return user_ids
+        return cls.get_col_from_many(
+            key=cls.__cache_key_users__.format(forum_id=id),
+            column=cls.user_id,
+            filter=cls.forum_id == id)
 
 
 class ForumThreadSubscription(db.Model, MultiPKMixin):
     __tablename__ = 'forums_threads_subscriptions'
-    __cache_key_active__ = 'forums_threads_subscriptions_active_{user_id}'
     __cache_key_users__ = 'forums_threads_subscriptions_{thread_id}_users'
-    __cache_key_of_users__ = 'forums_threads_subscriptions_{user_id}'
+    __cache_key_of_user__ = 'forums_threads_subscriptions_{user_id}'
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     thread_id = db.Column(db.Integer, db.ForeignKey('forums_threads.id'), primary_key=True)
@@ -540,6 +525,8 @@ class ForumThreadSubscription(db.Model, MultiPKMixin):
             thread_id: int) -> Optional['ForumThreadSubscription']:
         ForumThread.is_valid(thread_id, error=True)
         User.is_valid(user_id, error=True)
+        cache.delete(cls.__cache_key_users__.format(thread_id=thread_id))
+        cache.delete(cls.__cache_key_of_user__.format(user_id=user_id))
         return super()._new(
             user_id=user_id,
             thread_id=thread_id)
@@ -563,14 +550,11 @@ class ForumThreadSubscription(db.Model, MultiPKMixin):
         :param thread_id: The ID of the thread for which the cache key should be cleared
         """
         user_ids = user_ids or []  # Don't put a mutable object as default kwarg!
-        active_user_ids = user_ids or []
         if thread_id:
             cache.delete(cls.__cache_key_users__.format(thread_id=thread_id))
-            active_user_ids += cls.user_ids_from_thread(thread_id)
-        if active_user_ids:
-            cache.delete_many(
-                *(cls.__cache_key_of_users__.format(user_id=uid) for uid in user_ids),
-                *(cls.__cache_key_active__.format(user_id=uid) for uid in active_user_ids))
+            user_ids += cls.user_ids_from_thread(thread_id)
+        if user_ids:
+            cache.delete_many(*(cls.__cache_key_of_user__.format(user_id=uid) for uid in user_ids))
 
 
 class ForumThreadNote(db.Model, SinglePKMixin):

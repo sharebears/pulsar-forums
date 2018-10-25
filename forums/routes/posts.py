@@ -7,8 +7,7 @@ from voluptuous import All, Length, Range, Schema
 from core import APIException, db
 from core.utils import assert_user, require_permission, validate_data
 from core.validators import PostLength
-from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
-                           ForumThreadSubscription)
+from forums.models import ForumPost, ForumPostEditHistory, ForumThread
 
 from . import bp
 
@@ -105,7 +104,6 @@ def create_post(contents: str,
         thread_id=thread_id,
         user_id=flask.g.user.id,
         contents=contents)
-    ForumThreadSubscription.clear_cache_keys(thread_id=thread_id)
     return flask.jsonify(post)
 
 
