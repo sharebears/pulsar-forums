@@ -55,7 +55,7 @@ class ForumsPopulator(TestDataPopulator):
         db.session.execute("""INSERT INTO last_viewed_forum_posts (user_id, thread_id, post_id) VALUES
                           (1, 3, 2), (1, 5, 4), (1, 4, 5)""")
         db.session.execute("""INSERT INTO forums_forums_subscriptions (user_id, forum_id) VALUES
-                          (1, 1), (1, 2), (1, 3), (1, 4), (2, 4)""")
+                          (1, 1), (1, 2), (1, 3), (1, 4), (2, 4), (3, 5), (4, 5)""")
         db.session.execute("""INSERT INTO forums_threads_subscriptions (user_id, thread_id) VALUES
                           (1, 1), (1, 2), (1, 3), (1, 4), (2, 4)""")
         db.session.execute(

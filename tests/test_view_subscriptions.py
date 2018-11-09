@@ -128,7 +128,7 @@ def test_subscribe_forum_deletes_cache_keys(app, authed_client):
     assert response.status_code == 200
     assert not cache.get(ForumSubscription.__cache_key_users__.format(forum_id=5))
     assert not cache.get(ForumSubscription.__cache_key_of_user__.format(user_id=1))
-    assert ForumSubscription.user_ids_from_forum(5) == [1]
+    assert ForumSubscription.user_ids_from_forum(5) == [3, 4, 1]
 
 
 def test_unsubscribe_forum_deletes_cache_keys(app, authed_client):

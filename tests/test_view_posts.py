@@ -6,8 +6,7 @@ import pytest
 import pytz
 
 from conftest import add_permissions, check_json_response
-from forums.models import (ForumPost, ForumPostEditHistory, ForumThread,
-                           ForumThreadSubscription)
+from forums.models import (ForumPost, ForumPostEditHistory)
 
 
 def test_view_post(app, authed_client):

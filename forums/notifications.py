@@ -6,13 +6,13 @@ from core.notifications.models import Notification
 from core.users.models import User
 
 if TYPE_CHECKING:
-    from core.forums.models import ForumPost, ForumThread  # noqa
+    from forums.models import ForumPost, ForumThread  # noqa
 
 
-RE_QUOTE = re.compile(r'\[quote(?:=(.+)(?:\|.+)?)?\]|\[\/quote\]', flags=re.IGNORECASE)
-RE_QUOTE_OPEN = re.compile(r'\[quote(?:=[^\]]+)?\]/', flags=re.IGNORECASE)
+RE_QUOTE = re.compile(r'(\[quote(?:=([^|\]]*?)(?:\|.+?)?)?\]|\[\/quote\])', flags=re.IGNORECASE)
+RE_QUOTE_OPEN = re.compile(r'\[quote[^\]]*\]', flags=re.IGNORECASE)
 
-RE_MENTION = re.compile(r'\[user\]([^ ]+)\[\/user\]|\[quote(?:=[^\]]+)?\]|\[\/quote\]',
+RE_MENTION = re.compile(r'(\[user\](.+?)\[\/user\]|\[quote[^\]]*\]|\[\/quote\])',
                         flags=re.IGNORECASE)
 
 
@@ -25,7 +25,7 @@ def subscribe_users_to_new_thread(thread: 'ForumThread') -> None:
     from forums.models import ForumSubscription, ForumThreadSubscription
     user_ids = ForumSubscription.user_ids_from_forum(thread.forum_id)
     db.session.bulk_save_objects([
-        ForumThreadSubscription(user_id=uid, thread_id=thread.id)
+        ForumThreadSubscription.new(user_id=uid, thread_id=thread.id)
         for uid in user_ids])
     ForumThreadSubscription.clear_cache_keys(user_ids=user_ids)
 
@@ -33,6 +33,8 @@ def subscribe_users_to_new_thread(thread: 'ForumThread') -> None:
 def send_subscription_notices(post: 'ForumPost') -> None:
     from forums.models import ForumThreadSubscription
     user_ids = ForumThreadSubscription.user_ids_from_thread(post.thread_id)
+    if post.user_id in user_ids:
+        user_ids.remove(post.user_id)
     _dispatch_notifications(post, type='forums_subscription', user_ids=user_ids)
 
 
@@ -41,8 +43,10 @@ def check_post_contents_for_quotes(post: 'ForumPost') -> None:
     quoted_user_ids: List[int] = []
     for match in RE_QUOTE.findall(post.contents):
         if match[0].lower() != '[/quote]':
-            if cur_nest_level == 0 and match.last_index == 1:
-                quoted_user_ids += match[1]
+            if cur_nest_level == 0 and isinstance(match, tuple) and len(match) == 2:
+                user = User.from_username(match[1])
+                if user and user.id != post.user_id:
+                    quoted_user_ids.append(user.id)
             cur_nest_level -= 1
         else:
             cur_nest_level += 1
@@ -58,9 +62,9 @@ def check_post_contents_for_mentions(post: 'ForumPost') -> None:
             cur_nest_level += 1
         elif match[0].lower() == '[/quote]':
             cur_nest_level -= 1
-        elif cur_nest_level == 0 and match.last_index == 1:
+        elif cur_nest_level == 0 and isinstance(match, tuple) and len(match) == 2:
             user = User.from_username(match[1])
-            if user:
+            if user and user.id != post.user_id:
                 mentioned_user_ids.append(user.id)
 
     _dispatch_notifications(post, type='forums_mentioned', user_ids=mentioned_user_ids)
