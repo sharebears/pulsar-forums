@@ -11,20 +11,21 @@ from . import bp
 app = flask.current_app
 
 
-VIEW_FORUM_THREAD_SCHEMA = Schema({
-    'page': All(int, Range(min=0, max=2147483648)),
-    'limit': All(int, In((25, 50, 100))),
-    'include_dead': BoolGET
-    })
+VIEW_FORUM_THREAD_SCHEMA = Schema(
+    {
+        'page': All(int, Range(min=0, max=2147483648)),
+        'limit': All(int, In((25, 50, 100))),
+        'include_dead': BoolGET,
+    }
+)
 
 
 @bp.route('/forums/threads/<int:id>', methods=['GET'])
 @require_permission('forums_view')
 @validate_data(VIEW_FORUM_THREAD_SCHEMA)
-def view_thread(id: int,
-                page: int = 1,
-                limit: int = 50,
-                include_dead: bool = False) -> flask.Response:
+def view_thread(
+    id: int, page: int = 1, limit: int = 50, include_dead: bool = False
+) -> flask.Response:
     """
     This endpoint allows users to view details about a forum and its threads.
 
@@ -63,27 +64,33 @@ def view_thread(id: int,
     thread = ForumThread.from_pk(
         id,
         _404=True,
-        include_dead=flask.g.user.has_permission('forums_threads_modify_advanced'))
+        include_dead=flask.g.user.has_permission(
+            'forums_threads_modify_advanced'
+        ),
+    )
     thread.set_posts(
         page,
         limit,
-        include_dead and flask.g.user.has_permission('forums_posts_modify_advanced'))
+        include_dead
+        and flask.g.user.has_permission('forums_posts_modify_advanced'),
+    )
     return flask.jsonify(thread)
 
 
-CREATE_FORUM_THREAD_SCHEMA = Schema({
-    'topic': All(str, Length(max=150)),
-    'forum_id': All(int, Range(min=0, max=2147483648)),
-    'contents': All(str, Length(max=250000)),
-    }, required=True)
+CREATE_FORUM_THREAD_SCHEMA = Schema(
+    {
+        'topic': All(str, Length(max=150)),
+        'forum_id': All(int, Range(min=0, max=2147483648)),
+        'contents': All(str, Length(max=250000)),
+    },
+    required=True,
+)
 
 
 @bp.route('/forums/threads', methods=['POST'])
 @require_permission('forums_threads_create')
 @validate_data(CREATE_FORUM_THREAD_SCHEMA)
-def create_thread(topic: str,
-                  forum_id: int,
-                  contents: str) -> flask.Response:
+def create_thread(topic: str, forum_id: int, contents: str) -> flask.Response:
     """
     This is the endpoint for forum thread creation. The ``forums_threads_modify``
     permission is required to access this endpoint.
@@ -123,29 +130,36 @@ def create_thread(topic: str,
     :statuscode 200: Creation successful
     :statuscode 400: Creation unsuccessful
     """
-    return flask.jsonify(ForumThread.new(
-        topic=topic,
-        forum_id=forum_id,
-        creator_id=flask.g.user.id,
-        post_contents=contents))
+    return flask.jsonify(
+        ForumThread.new(
+            topic=topic,
+            forum_id=forum_id,
+            creator_id=flask.g.user.id,
+            post_contents=contents,
+        )
+    )
 
 
-MODIFY_FORUM_THREAD_SCHEMA = Schema({
-    'topic': All(str, Length(max=150)),
-    'forum_id': All(int, Range(min=0, max=2147483648)),
-    'locked': BoolGET,
-    'sticky': BoolGET,
-    })
+MODIFY_FORUM_THREAD_SCHEMA = Schema(
+    {
+        'topic': All(str, Length(max=150)),
+        'forum_id': All(int, Range(min=0, max=2147483648)),
+        'locked': BoolGET,
+        'sticky': BoolGET,
+    }
+)
 
 
 @bp.route('/forums/threads/<int:id>', methods=['PUT'])
 @require_permission('forums_threads_modify')
 @validate_data(MODIFY_FORUM_THREAD_SCHEMA)
-def modify_thread(id: int,
-                  topic: str = None,
-                  forum_id: int = None,
-                  locked: bool = None,
-                  sticky: bool = None) -> flask.Response:
+def modify_thread(
+    id: int,
+    topic: str = None,
+    forum_id: int = None,
+    locked: bool = None,
+    sticky: bool = None,
+) -> flask.Response:
     """
     This is the endpoint for forum thread editing. The ``forums_threads_modify``
     permission is required to access this endpoint. The topic, forum_id,
@@ -245,21 +259,22 @@ def delete_thread(id: int) -> flask.Response:
     thread = ForumThread.from_pk(id, _404=True)
     thread.deleted = True
     ForumPost.update_many(
-        pks=ForumPost.get_ids_from_thread(thread.id),
-        update={'deleted': True})
-    return flask.jsonify(f'ForumThread {id} ({thread.topic}) has been deleted.')
+        pks=ForumPost.get_ids_from_thread(thread.id), update={'deleted': True}
+    )
+    return flask.jsonify(
+        f'ForumThread {id} ({thread.topic}) has been deleted.'
+    )
 
 
-ADD_FORUM_THREAD_NOTE_SCHEMA = Schema({
-    'note': All(str, Length(max=10000)),
-    }, required=True)
+ADD_FORUM_THREAD_NOTE_SCHEMA = Schema(
+    {'note': All(str, Length(max=10000))}, required=True
+)
 
 
 @bp.route('/forums/threads/<int:id>/notes', methods=['POST'])
 @require_permission('forums_threads_modify')
 @validate_data(ADD_FORUM_THREAD_NOTE_SCHEMA)
-def add_thread_note(id: int,
-                    note: str) -> flask.Response:
+def add_thread_note(id: int, note: str) -> flask.Response:
     """
     Endpoint for forum thread note creation. Limited to those with ``forums_threads_modify``
     permission.
@@ -290,7 +305,6 @@ def add_thread_note(id: int,
     :statuscode 200: Deletion successful
     :statuscode 400: Invalid forum thread
     """
-    return flask.jsonify(ForumThreadNote.new(
-        thread_id=id,
-        user_id=flask.g.user.id,
-        note=note))
+    return flask.jsonify(
+        ForumThreadNote.new(thread_id=id, user_id=flask.g.user.id, note=note)
+    )

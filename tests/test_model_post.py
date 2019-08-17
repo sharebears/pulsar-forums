@@ -36,8 +36,11 @@ def test_post_get_from_thread(app, authed_client):
 
 
 def test_post_get_from_thread_cached(app, authed_client):
-    cache.set(ForumPost.__cache_key_of_thread__.format(id=2), ['1', '6'], timeout=60)
-    ForumPost.from_pk(1); ForumPost.from_pk(6)  # noqa cache this
+    cache.set(
+        ForumPost.__cache_key_of_thread__.format(id=2), ['1', '6'], timeout=60
+    )
+    ForumPost.from_pk(1)
+    ForumPost.from_pk(6)  # noqa cache this
     posts = ForumPost.from_thread(2, page=1, limit=50)
     assert len(posts) == 2
 
@@ -49,25 +52,19 @@ def test_post_get_from_thread_cached(app, authed_client):
 
 
 def test_new_post(app, authed_client):
-    post = ForumPost.new(
-        thread_id=3,
-        user_id=1,
-        contents='NewForumPost')
+    post = ForumPost.new(thread_id=3, user_id=1, contents='NewForumPost')
     assert post.thread_id == 3
     assert post.user_id == 1
     assert post.contents == 'NewForumPost'
     assert ForumPost.from_cache(post.cache_key).id == post.id == 9
 
 
-@pytest.mark.parametrize(
-    'thread_id, user_id', [
-        (10, 1), (2, 1), (1, 6)])
+@pytest.mark.parametrize('thread_id, user_id', [(10, 1), (2, 1), (1, 6)])
 def test_new_post_failure(app, authed_client, thread_id, user_id):
     with pytest.raises(APIException):
         assert ForumPost.new(
-            thread_id=thread_id,
-            user_id=user_id,
-            contents='NewForumPost')
+            thread_id=thread_id, user_id=user_id, contents='NewForumPost'
+        )
 
 
 def test_post_edit_history_from_pk(app, authed_client):
@@ -96,21 +93,28 @@ def test_post_edit_history_from_cache(app, authed_client):
     ForumPostEditHistory.from_pk(1)  # cache this
     history = ForumPostEditHistory.from_post(3)
     assert len(history) == 1
-    assert any(h.contents == 'Why the fcuk is Gazelle in HPH?' for h in history)
+    assert any(
+        h.contents == 'Why the fcuk is Gazelle in HPH?' for h in history
+    )
 
 
 def test_serialize_no_perms(app, authed_client):
     post = ForumPost.from_pk(2)
     data = NewJSONEncoder().default(post)
-    check_dictionary(data, {
-        'id': 2,
-        'contents': 'Why the fuck is Gazelle in PHP?!',
-        'sticky': True,
-        'editor': None,
-        })
-    assert ('thread' in data
-            and data['thread']['id'] == 3
-            and len([k for k, v in data['thread'].items() if v]) == 2)
+    check_dictionary(
+        data,
+        {
+            'id': 2,
+            'contents': 'Why the fuck is Gazelle in PHP?!',
+            'sticky': True,
+            'editor': None,
+        },
+    )
+    assert (
+        'thread' in data
+        and data['thread']['id'] == 3
+        and len([k for k, v in data['thread'].items() if v]) == 2
+    )
     assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
@@ -120,36 +124,46 @@ def test_serialize_very_detailed(app, authed_client):
     add_permissions(app, 'forums_posts_modify_advanced')
     post = ForumPost.from_pk(1)
     data = NewJSONEncoder().default(post)
-    check_dictionary(data, {
-        'id': 1,
-        'contents': '!site New yeah',
-        'sticky': True,
-        'editor': None,
-        'deleted': False,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'contents': '!site New yeah',
+            'sticky': True,
+            'editor': None,
+            'deleted': False,
+        },
+    )
     assert 'thread' in data and data['thread'] is None
     assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
-    assert ('edit_history' in data
-            and data['edit_history'][0]['id'] == 1
-            and len(data['edit_history']) == 1)
+    assert (
+        'edit_history' in data
+        and data['edit_history'][0]['id'] == 1
+        and len(data['edit_history']) == 1
+    )
 
 
 def test_serialize_nested(app, authed_client):
     add_permissions(app, 'forums_posts_modify_advanced')
     post = ForumPost.from_pk(1)
     data = NewJSONEncoder()._objects_to_dict(post.serialize(nested=True))
-    check_dictionary(data, {
-        'id': 1,
-        'contents': '!site New yeah',
-        'sticky': True,
-        'editor': None,
-        'deleted': False,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'contents': '!site New yeah',
+            'sticky': True,
+            'editor': None,
+            'deleted': False,
+        },
+    )
     assert 'user' in data and data['user']['id'] == 1
     assert 'time' in data and isinstance(data['time'], int)
     assert 'edited_time' in data
-    assert ('edit_history' in data
-            and data['edit_history'][0]['id'] == 1
-            and len(data['edit_history']) == 1)
+    assert (
+        'edit_history' in data
+        and data['edit_history'][0]['id'] == 1
+        and len(data['edit_history']) == 1
+    )

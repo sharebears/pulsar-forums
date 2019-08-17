@@ -15,7 +15,8 @@ def forum_post_count(self) -> int:
     return self.count(
         key=self.__cache_key_forum_post_count__.format(id=self.id),
         attribute=ForumPost.id,
-        filter=ForumPost.user_id == self.id)
+        filter=ForumPost.user_id == self.id,
+    )
 
 
 @cached_property
@@ -23,7 +24,8 @@ def forum_thread_count(self) -> int:
     return self.count(
         key=self.__cache_key_forum_thread_count__.format(id=self.id),
         attribute=ForumThread.id,
-        filter=ForumThread.creator_id == self.id)
+        filter=ForumThread.creator_id == self.id,
+    )
 
 
 @cached_property
@@ -38,15 +40,15 @@ def modify_core():
         forum_thread_count=forum_thread_count,
         forum_post_count=forum_post_count,
         forum_permissions=forum_permissions,
-        )
+    )
     UserSerializer.assign_attrs(
-        forum_permissions=Attribute(permission='users_moderate', nested=False),
-        )
+        forum_permissions=Attribute(permission='users_moderate', nested=False)
+    )
     Permissions.permission_regexes['basic'] += [
         re.compile('forumaccess_forum_\d+$'),
         re.compile('forumaccess_thread_\d+$'),
-        ]
+    ]
     Config.BASIC_PERMISSIONS += [
         'forums_posts_create',
         'forums_threads_create',
-        ]
+    ]

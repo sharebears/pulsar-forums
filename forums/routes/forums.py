@@ -14,20 +14,21 @@ from . import bp
 app = flask.current_app
 
 
-VIEW_FORUM_SCHEMA = Schema({
-    'page': All(int, Range(min=0, max=2147483648)),
-    'limit': All(int, In((25, 50, 100))),
-    'include_dead': BoolGET
-    })
+VIEW_FORUM_SCHEMA = Schema(
+    {
+        'page': All(int, Range(min=0, max=2147483648)),
+        'limit': All(int, In((25, 50, 100))),
+        'include_dead': BoolGET,
+    }
+)
 
 
 @bp.route('/forums/<int:id>', methods=['GET'])
 @require_permission('forums_view')
 @validate_data(VIEW_FORUM_SCHEMA)
-def view_forum(id: int,
-               page: int = 1,
-               limit: int = 50,
-               include_dead: bool = False) -> flask.Response:
+def view_forum(
+    id: int, page: int = 1, limit: int = 50, include_dead: bool = False
+) -> flask.Response:
     """
     This endpoint allows users to view details about a forum and its threads.
 
@@ -54,29 +55,36 @@ def view_forum(id: int,
     forum = Forum.from_pk(
         id,
         _404=True,
-        include_dead=flask.g.user.has_permission('forums_forums_modify'))
+        include_dead=flask.g.user.has_permission('forums_forums_modify'),
+    )
     forum.set_threads(
         page,
         limit,
-        include_dead and flask.g.user.has_permission('forums_threads_modify_advanced'))
+        include_dead
+        and flask.g.user.has_permission('forums_threads_modify_advanced'),
+    )
     return flask.jsonify(forum)
 
 
-CREATE_FORUM_SCHEMA = Schema({
-    'name': All(str, Length(max=32)),
-    'category_id': All(int, Range(min=0, max=2147483648)),
-    Optional('description', default=None): Any(All(str, Length(max=1024)), None),
-    Optional('position', default=0): All(int, Range(min=0, max=99999)),
-    }, required=True)
+CREATE_FORUM_SCHEMA = Schema(
+    {
+        'name': All(str, Length(max=32)),
+        'category_id': All(int, Range(min=0, max=2147483648)),
+        Optional('description', default=None): Any(
+            All(str, Length(max=1024)), None
+        ),
+        Optional('position', default=0): All(int, Range(min=0, max=99999)),
+    },
+    required=True,
+)
 
 
 @bp.route('/forums', methods=['POST'])
 @require_permission('forums_forums_modify')
 @validate_data(CREATE_FORUM_SCHEMA)
-def create_forum(name: str,
-                 category_id: int,
-                 description: str = None,
-                 position: int = 0) -> flask.Response:
+def create_forum(
+    name: str, category_id: int, description: str = None, position: int = 0
+) -> flask.Response:
     """
     This is the endpoint for forum creation. The ``forums_forums_modify`` permission
     is required to access this endpoint.
@@ -113,26 +121,31 @@ def create_forum(name: str,
         name=name,
         category_id=category_id,
         description=description,
-        position=position)
+        position=position,
+    )
     return flask.jsonify(forum)
 
 
-MODIFY_FORUM_SCHEMA = Schema({
-    'name': All(str, Length(max=32)),
-    'category_id': All(int, Range(min=0, max=2147483648)),
-    'description': Any(All(str, Length(max=1024)), None),
-    'position': All(int, Range(min=0, max=99999)),
-    })
+MODIFY_FORUM_SCHEMA = Schema(
+    {
+        'name': All(str, Length(max=32)),
+        'category_id': All(int, Range(min=0, max=2147483648)),
+        'description': Any(All(str, Length(max=1024)), None),
+        'position': All(int, Range(min=0, max=99999)),
+    }
+)
 
 
 @bp.route('/forums/<int:id>', methods=['PUT'])
 @require_permission('forums_forums_modify')
 @validate_data(MODIFY_FORUM_SCHEMA)
-def modify_forum(id: int,
-                 name: Optional_[str] = None,
-                 category_id: Optional_[int] = None,
-                 description: Union[str, bool, None] = False,
-                 position: Optional_[int] = None) -> flask.Response:
+def modify_forum(
+    id: int,
+    name: Optional_[str] = None,
+    category_id: Optional_[int] = None,
+    description: Union[str, bool, None] = False,
+    position: Optional_[int] = None,
+) -> flask.Response:
     """
     This is the endpoint for forum editing. The ``forums_forums_modify`` permission
     is required to access this endpoint. The name, category, description,
@@ -210,6 +223,6 @@ def delete_forum(id: int) -> flask.Response:
     forum = Forum.from_pk(id, _404=True)
     forum.deleted = True
     ForumThread.update_many(
-        pks=ForumThread.get_ids_from_forum(forum.id),
-        update={'deleted': True})
+        pks=ForumThread.get_ids_from_forum(forum.id), update={'deleted': True}
+    )
     return flask.jsonify(f'Forum {id} ({forum.name}) has been deleted.')

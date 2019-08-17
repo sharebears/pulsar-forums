@@ -10,11 +10,9 @@ from forums.models import ForumPoll, ForumPollChoice
 def test_view_poll(app, authed_client):
     add_permissions(app, 'forums_view')
     response = authed_client.get('/polls/1')
-    check_json_response(response, {
-        'id': 1,
-        'featured': False,
-        'question': 'Question 1',
-        })
+    check_json_response(
+        response, {'id': 1, 'featured': False, 'question': 'Question 1'}
+    )
     assert response.status_code == 200
     assert len(response.get_json()['response']['choices']) == 3
 
@@ -28,13 +26,10 @@ def test_view_poll_nonexistent(app, authed_client):
 def test_modify_poll_closed_featured(app, authed_client):
     add_permissions(app, 'forums_view', 'modify_forum_polls')
     ForumPoll.from_pk(3)  # cache it
-    response = authed_client.put('/polls/1', data=json.dumps({
-        'closed': True, 'featured': True}))
-    check_json_response(response, {
-        'id': 1,
-        'featured': True,
-        'closed': True,
-        })
+    response = authed_client.put(
+        '/polls/1', data=json.dumps({'closed': True, 'featured': True})
+    )
+    check_json_response(response, {'id': 1, 'featured': True, 'closed': True})
     poll = ForumPoll.from_pk(1)
     assert poll.closed is True
     assert poll.featured is True
@@ -43,34 +38,36 @@ def test_modify_poll_closed_featured(app, authed_client):
 
 def test_modify_poll_unfeature(app, authed_client):
     add_permissions(app, 'forums_view', 'modify_forum_polls')
-    authed_client.put('/polls/3', data=json.dumps({
-        'featured': False,
-        }))
+    authed_client.put('/polls/3', data=json.dumps({'featured': False}))
     assert ForumPoll.get_featured() is None
     assert not cache.get(ForumPoll.__cache_key_featured__)
 
 
 def test_modify_poll_choices(app, authed_client):
     add_permissions(app, 'forums_view', 'modify_forum_polls')
-    response = authed_client.put('/polls/1', data=json.dumps({
-        'choices': {
-            'add': ['a', 'b', 'c'],
-            'delete': [1, 2],
-        }}))
+    response = authed_client.put(
+        '/polls/1',
+        data=json.dumps(
+            {'choices': {'add': ['a', 'b', 'c'], 'delete': [1, 2]}}
+        ),
+    )
     choices = response.get_json()['response']['choices']
     assert len(choices) == 4
-    assert {'Choice C', 'a', 'b', 'c'} == {choice['choice'] for choice in choices}
+    assert {'Choice C', 'a', 'b', 'c'} == {
+        choice['choice'] for choice in choices
+    }
     choices = ForumPollChoice.from_poll(1)
     assert {'Choice C', 'a', 'b', 'c'} == {choice.choice for choice in choices}
 
 
 def test_modify_poll_choices_errors(app, authed_client):
     add_permissions(app, 'forums_view', 'modify_forum_polls')
-    response = authed_client.put('/polls/1', data=json.dumps({
-        'choices': {
-            'add': ['Choice A', 'Choice B'],
-            'delete': [1, 5],
-        }})).get_json()['response']
+    response = authed_client.put(
+        '/polls/1',
+        data=json.dumps(
+            {'choices': {'add': ['Choice A', 'Choice B'], 'delete': [1, 5]}}
+        ),
+    ).get_json()['response']
     assert 'Choice A' in response
     assert 'Choice B' in response
     assert 'The following poll choices could not be added: ' in response
@@ -79,10 +76,10 @@ def test_modify_poll_choices_errors(app, authed_client):
 
 def test_modify_poll_choices_partial(app, authed_client):
     add_permissions(app, 'forums_view', 'modify_forum_polls')
-    response = authed_client.put('/polls/1', data=json.dumps({
-        'choices': {
-            'add': ['Choice A', 'Choice B'],
-        }})).get_json()['response']
+    response = authed_client.put(
+        '/polls/1',
+        data=json.dumps({'choices': {'add': ['Choice A', 'Choice B']}}),
+    ).get_json()['response']
     assert 'Choice A' in response
     assert 'Choice B' in response
     assert 'The following poll choices could not be added: ' in response
@@ -95,8 +92,7 @@ def test_vote_poll(app, authed_client):
     assert ForumPollChoice.from_pk(6).answers == 1
 
 
-@pytest.mark.parametrize(
-    'choice_id', [1, 2])
+@pytest.mark.parametrize('choice_id', [1, 2])
 def test_vote_poll_already_voted(app, authed_client, choice_id):
     add_permissions(app, 'forums_view', 'forums_polls_vote')
     response = authed_client.post(f'/polls/votes/{choice_id}')

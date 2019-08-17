@@ -12,14 +12,22 @@ from core.mixins import MultiPKMixin, SinglePKMixin
 from core.permissions.models import UserPermission
 from core.users.models import User
 from core.utils import cached_property
-from forums.notifications import (check_post_contents_for_mentions,
-                                  check_post_contents_for_quotes,
-                                  send_subscription_notices,
-                                  subscribe_users_to_new_thread)
-from forums.serializers import (ForumCategorySerializer, ForumPollChoiceSerializer,
-                                ForumPollSerializer, ForumPostEditHistorySerializer,
-                                ForumPostSerializer, ForumSerializer,
-                                ForumThreadNoteSerializer, ForumThreadSerializer)
+from forums.notifications import (
+    check_post_contents_for_mentions,
+    check_post_contents_for_quotes,
+    send_subscription_notices,
+    subscribe_users_to_new_thread,
+)
+from forums.serializers import (
+    ForumCategorySerializer,
+    ForumPollChoiceSerializer,
+    ForumPollSerializer,
+    ForumPostEditHistorySerializer,
+    ForumPostSerializer,
+    ForumSerializer,
+    ForumThreadNoteSerializer,
+    ForumThreadSerializer,
+)
 
 app = flask.current_app
 
@@ -34,8 +42,12 @@ class ForumCategory(db.Model, SinglePKMixin):
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(32), nullable=False)
     description: Optional[str] = db.Column(db.Text)
-    position: int = db.Column(db.SmallInteger, nullable=False, server_default='0', index=True)
-    deleted: bool = db.Column(db.Boolean, nullable=False, server_default='f', index=True)
+    position: int = db.Column(
+        db.SmallInteger, nullable=False, server_default='0', index=True
+    )
+    deleted: bool = db.Column(
+        db.Boolean, nullable=False, server_default='f', index=True
+    )
 
     @classmethod
     def get_all(cls, include_dead: bool = False) -> List['ForumCategory']:
@@ -43,17 +55,16 @@ class ForumCategory(db.Model, SinglePKMixin):
             key=cls.__cache_key_all__,
             order=cls.position.asc(),  # type: ignore
             include_dead=include_dead,
-            required_properties=('forums', ))
+            required_properties=('forums',),
+        )
 
     @classmethod
-    def new(cls,
-            name: str,
-            description: str = None,
-            position: int = 0) -> 'ForumCategory':
+    def new(
+        cls, name: str, description: str = None, position: int = 0
+    ) -> 'ForumCategory':
         return super()._new(
-            name=name,
-            description=description,
-            position=position)
+            name=name, description=description, position=position
+        )
 
     @cached_property
     def forums(self) -> List['Forum']:
@@ -76,38 +87,58 @@ class Forum(db.Model, SinglePKMixin):
     name: str = db.Column(db.String(32), nullable=False)
     description: Optional[str] = db.Column(db.Text)
     category_id: int = db.Column(
-        db.Integer, db.ForeignKey('forums_categories.id'), nullable=False, index=True)
-    position: int = db.Column(db.SmallInteger, nullable=False, server_default='0', index=True)
-    deleted: bool = db.Column(db.Boolean, nullable=False, server_default='f', index=True)
+        db.Integer,
+        db.ForeignKey('forums_categories.id'),
+        nullable=False,
+        index=True,
+    )
+    position: int = db.Column(
+        db.SmallInteger, nullable=False, server_default='0', index=True
+    )
+    deleted: bool = db.Column(
+        db.Boolean, nullable=False, server_default='f', index=True
+    )
 
     @classmethod
     def from_category(cls, category_id: int) -> List['Forum']:
         return cls.get_many(
             key=cls.__cache_key_of_category__.format(id=category_id),
             filter=cls.category_id == category_id,
-            order=cls.position.asc())  # type: ignore
+            order=cls.position.asc(),
+        )  # type: ignore
 
     @classmethod
-    def new(cls,
-            name: str,
-            category_id: int,
-            description: str = None,
-            position: int = 0) -> Optional['Forum']:
+    def new(
+        cls,
+        name: str,
+        category_id: int,
+        description: str = None,
+        position: int = 0,
+    ) -> Optional['Forum']:
         ForumCategory.is_valid(category_id, error=True)
         cache.delete(cls.__cache_key_of_category__.format(id=category_id))
         return super()._new(
             name=name,
             category_id=category_id,
             description=description,
-            position=position)
+            position=position,
+        )
 
     @classmethod
     def from_subscribed_user(cls, user_id: int) -> List['Forum']:
         return cls.get_many(
-            key=ForumSubscription.__cache_key_of_user__.format(user_id=user_id),
-            filter=cls.id.in_(db.session.query(ForumSubscription.forum_id)  # type: ignore
-                              .filter(ForumSubscription.user_id == user_id)),
-            order=Forum.id.asc())  # type: ignore
+            key=ForumSubscription.__cache_key_of_user__.format(
+                user_id=user_id
+            ),
+            filter=cls.id.in_(
+                db.session.query(
+                    ForumSubscription.forum_id
+                ).filter(  # type: ignore
+                    ForumSubscription.user_id == user_id
+                )
+            ),
+            order=Forum.id.asc(),
+        )  # type: ignore
 
     @cached_property
     def category(self) -> 'ForumCategory':
@@ -118,14 +149,18 @@ class Forum(db.Model, SinglePKMixin):
         return self.count(
             key=self.__cache_key_thread_count__.format(id=self.id),
             attribute=ForumThread.id,
-            filter=and_(ForumThread.forum_id == self.id, ForumThread.deleted == 'f'))
+            filter=and_(
+                ForumThread.forum_id == self.id, ForumThread.deleted == 'f'
+            ),
+        )
 
     @cached_property
     def last_updated_thread(self) -> Optional['ForumThread']:
         return ForumThread.from_query(
             key=self.__cache_key_last_updated__.format(id=self.id),
             filter=(ForumThread.forum_id == self.id),
-            order=ForumThread.last_updated.desc())
+            order=ForumThread.last_updated.desc(),
+        )
 
     @property
     def threads(self) -> List['ForumThread']:
@@ -133,15 +168,14 @@ class Forum(db.Model, SinglePKMixin):
             self._threads = ForumThread.from_forum(self.id, 1, limit=50)
         return self._threads
 
-    def set_threads(self,
-                    page: int,
-                    limit: int,
-                    include_dead: bool = False) -> None:
-        self._threads = ForumThread.from_forum(self.id, page, limit, include_dead)
+    def set_threads(
+        self, page: int, limit: int, include_dead: bool = False
+    ) -> None:
+        self._threads = ForumThread.from_forum(
+            self.id, page, limit, include_dead
+        )
 
-    def can_access(self,
-                   permission: str = None,
-                   error: bool = False) -> bool:
+    def can_access(self, permission: str = None, error: bool = False) -> bool:
         """Determines whether or not the user has the permissions to access the forum."""
         if flask.g.user is None:  # pragma: no cover
             if error:
@@ -150,16 +184,21 @@ class Forum(db.Model, SinglePKMixin):
 
         # Explicit forum access
         permission_key = self.__permission_key__.format(id=self.id)
-        if (flask.g.user.has_permission(permission_key)
-                or (permission is not None and flask.g.user.has_permission(permission))):
+        if flask.g.user.has_permission(permission_key) or (
+            permission is not None and flask.g.user.has_permission(permission)
+        ):
             return True
 
         # If user has access to a thread in the forum, they can view the metadata of the forum
         # (albeit they can't view threads beyond their alloted ones).
         forum_thread_permissions = {
             ForumThread.__permission_key__.format(id=fid)
-            for fid in ForumThread.get_ids_from_forum(self.id)}
-        if any(fperm in forum_thread_permissions for fperm in flask.g.user.forum_permissions):
+            for fid in ForumThread.get_ids_from_forum(self.id)
+        }
+        if any(
+            fperm in forum_thread_permissions
+            for fperm in flask.g.user.forum_permissions
+        ):
             return True
         if error:
             raise _403Exception
@@ -181,50 +220,55 @@ class ForumThread(db.Model, SinglePKMixin):
     id: int = db.Column(db.Integer, primary_key=True)
     topic: str = db.Column(db.String(150), nullable=False)
     forum_id = db.Column(
-        db.Integer, db.ForeignKey('forums.id'), nullable=False, index=True)  # type: int
-    creator_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+        db.Integer, db.ForeignKey('forums.id'), nullable=False, index=True
+    )  # type: int
+    creator_id: int = db.Column(
+        db.Integer, db.ForeignKey('users.id'), nullable=False, index=True
+    )
     created_time: datetime = db.Column(
-        db.DateTime(timezone=True), nullable=False, server_default=func.now())
+        db.DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     locked: bool = db.Column(db.Boolean, nullable=False, server_default='f')
     sticky: bool = db.Column(db.Boolean, nullable=False, server_default='f')
-    deleted: bool = db.Column(db.Boolean, nullable=False, server_default='f', index=True)
+    deleted: bool = db.Column(
+        db.Boolean, nullable=False, server_default='f', index=True
+    )
 
     @declared_attr
     def __table_args__(cls):
-        return db.Index('ix_forums_threads_topic', func.lower(cls.topic)),
+        return (db.Index('ix_forums_threads_topic', func.lower(cls.topic)),)
 
     @classmethod
-    def from_forum(cls,
-                   forum_id: int,
-                   page: int = 1,
-                   limit: Optional[int] = 50,
-                   include_dead: bool = False) -> List['ForumThread']:
+    def from_forum(
+        cls,
+        forum_id: int,
+        page: int = 1,
+        limit: Optional[int] = 50,
+        include_dead: bool = False,
+    ) -> List['ForumThread']:
         return cls.get_many(
             key=cls.__cache_key_of_forum__.format(id=forum_id),
             filter=cls.forum_id == forum_id,
             order=cls.last_updated.desc(),
             page=page,
             limit=limit,
-            include_dead=include_dead)
+            include_dead=include_dead,
+        )
 
     @classmethod
-    def new(cls,
-            topic: str,
-            forum_id: int,
-            creator_id: int,
-            post_contents: str) -> Optional['ForumThread']:
+    def new(
+        cls, topic: str, forum_id: int, creator_id: int, post_contents: str
+    ) -> Optional['ForumThread']:
         Forum.is_valid(forum_id, error=True)
         User.is_valid(creator_id, error=True)
         cache.delete(cls.__cache_key_of_forum__.format(id=forum_id))
         thread = super()._new(
-            topic=topic,
-            forum_id=forum_id,
-            creator_id=creator_id)
+            topic=topic, forum_id=forum_id, creator_id=creator_id
+        )
         subscribe_users_to_new_thread(thread)
         ForumPost.new(
-            thread_id=thread.id,
-            user_id=creator_id,
-            contents=post_contents)
+            thread_id=thread.id, user_id=creator_id, contents=post_contents
+        )
         return thread
 
     @classmethod
@@ -232,7 +276,8 @@ class ForumThread(db.Model, SinglePKMixin):
         return cls.get_pks_of_many(
             key=cls.__cache_key_of_forum__.format(id=id),
             filter=cls.forum_id == id,
-            order=cls.last_updated.desc())
+            order=cls.last_updated.desc(),
+        )
 
     @classmethod
     def from_subscribed_user(cls, user_id: int) -> List['ForumThread']:
@@ -241,29 +286,46 @@ class ForumThread(db.Model, SinglePKMixin):
     @classmethod
     def subscribed_ids(cls, user_id: int) -> List[Union[str, int]]:
         return cls.get_pks_of_many(
-            key=ForumThreadSubscription.__cache_key_of_user__.format(user_id=user_id),
-            filter=cls.id.in_(db.session.query(ForumThreadSubscription.thread_id)  # type: ignore
-                              .filter(ForumThreadSubscription.user_id == user_id)),
-            order=ForumThread.id.asc())  # type: ignore
+            key=ForumThreadSubscription.__cache_key_of_user__.format(
+                user_id=user_id
+            ),
+            filter=cls.id.in_(
+                db.session.query(
+                    ForumThreadSubscription.thread_id
+                ).filter(  # type: ignore
+                    ForumThreadSubscription.user_id == user_id
+                )
+            ),
+            order=ForumThread.id.asc(),
+        )  # type: ignore
 
     @hybrid_property
     def last_updated(cls) -> BinaryExpression:
-        return select([func.max(ForumPost.time)]).where(ForumPost.thread_id == cls.id).as_scalar()
+        return (
+            select([func.max(ForumPost.time)])
+            .where(ForumPost.thread_id == cls.id)
+            .as_scalar()
+        )
 
     @cached_property
     def last_post(self) -> Optional['ForumPost']:
         return ForumPost.from_query(
             key=self.__cache_key_last_post__.format(id=self.id),
             filter=and_(
-                ForumPost.thread_id == self.id,
-                ForumPost.deleted == 'f'),
-            order=ForumPost.id.desc())  # type: ignore
+                ForumPost.thread_id == self.id, ForumPost.deleted == 'f'
+            ),
+            order=ForumPost.id.desc(),
+        )  # type: ignore
 
     @cached_property
     def last_viewed_post(self) -> Optional['ForumPost']:
-        return ForumLastViewedPost.post_from_attrs(
-            thread_id=self.id,
-            user_id=flask.g.user.id) if flask.g.user else None
+        return (
+            ForumLastViewedPost.post_from_attrs(
+                thread_id=self.id, user_id=flask.g.user.id
+            )
+            if flask.g.user
+            else None
+        )
 
     @cached_property
     def forum(self) -> 'Forum':
@@ -282,7 +344,10 @@ class ForumThread(db.Model, SinglePKMixin):
         return self.count(
             key=self.__cache_key_post_count__.format(id=self.id),
             attribute=ForumPost.id,
-            filter=and_(ForumPost.thread_id == self.id, ForumPost.deleted == 'f',))
+            filter=and_(
+                ForumPost.thread_id == self.id, ForumPost.deleted == 'f'
+            ),
+        )
 
     @cached_property
     def thread_notes(self) -> List['ForumThreadNote']:
@@ -290,7 +355,11 @@ class ForumThread(db.Model, SinglePKMixin):
 
     @cached_property
     def subscribed(self) -> bool:
-        return self.id in set(self.subscribed_ids(flask.g.user.id)) if flask.g.user else False
+        return (
+            self.id in set(self.subscribed_ids(flask.g.user.id))
+            if flask.g.user
+            else False
+        )
 
     @property
     def posts(self) -> List['ForumPost']:
@@ -298,15 +367,12 @@ class ForumThread(db.Model, SinglePKMixin):
             self._posts = ForumPost.from_thread(self.id, 1, limit=50)
         return self._posts
 
-    def set_posts(self,
-                  page: int = 1,
-                  limit: int = 50,
-                  include_dead: bool = False) -> None:
+    def set_posts(
+        self, page: int = 1, limit: int = 50, include_dead: bool = False
+    ) -> None:
         self._posts = ForumPost.from_thread(self.id, page, limit, include_dead)
 
-    def can_access(self,
-                   permission: str = None,
-                   error: bool = False) -> bool:
+    def can_access(self, permission: str = None, error: bool = False) -> bool:
         """Determines whether or not the user has the permissions to access the thread."""
         if flask.g.user is None:  # pragma: no cover
             if error:
@@ -315,19 +381,25 @@ class ForumThread(db.Model, SinglePKMixin):
 
         # Explicit thread access
         permission_key = self.__permission_key__.format(id=self.id)
-        if (flask.g.user.has_permission(permission_key)
-                or (permission is not None and flask.g.user.has_permission(permission))):
+        if flask.g.user.has_permission(permission_key) or (
+            permission is not None and flask.g.user.has_permission(permission)
+        ):
             return True
 
         # Access to forum gives access to all threads by default.
         # If user has been ungranted the thread, they cannot view it regardless.
         ungranted_threads = [
-            p for p, g in UserPermission.from_user(
-                flask.g.user.id, prefix='forumaccess_thread').items()
+            p
+            for p, g in UserPermission.from_user(
+                flask.g.user.id, prefix='forumaccess_thread'
+            ).items()
             if g is False
-            ]
+        ]
         if permission_key not in ungranted_threads and (
-                flask.g.user.has_permission(Forum.__permission_key__.format(id=self.forum_id))):
+            flask.g.user.has_permission(
+                Forum.__permission_key__.format(id=self.forum_id)
+            )
+        ):
             return True
         if error:
             raise _403Exception
@@ -343,50 +415,62 @@ class ForumPost(db.Model, SinglePKMixin):
 
     id: int = db.Column(db.Integer, primary_key=True)
     thread_id: int = db.Column(
-        db.Integer, db.ForeignKey('forums_threads.id'), nullable=False, index=True)
-    user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+        db.Integer,
+        db.ForeignKey('forums_threads.id'),
+        nullable=False,
+        index=True,
+    )
+    user_id: int = db.Column(
+        db.Integer, db.ForeignKey('users.id'), nullable=False, index=True
+    )
     contents: str = db.Column(db.Text, nullable=False)
     time: datetime = db.Column(
-        db.DateTime(timezone=True), nullable=False, server_default=func.now())
+        db.DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     sticky: bool = db.Column(db.Boolean, nullable=False, server_default='f')
-    edited_user_id: Optional[int] = db.Column(db.Integer, db.ForeignKey('users.id'))
+    edited_user_id: Optional[int] = db.Column(
+        db.Integer, db.ForeignKey('users.id')
+    )
     edited_time: Optional[datetime] = db.Column(db.DateTime(timezone=True))
-    deleted: bool = db.Column(db.Boolean, nullable=False, server_default='f', index=True)
+    deleted: bool = db.Column(
+        db.Boolean, nullable=False, server_default='f', index=True
+    )
 
     @classmethod
-    def from_thread(cls,
-                    thread_id: int,
-                    page: int = 1,
-                    limit: int = 50,
-                    include_dead: bool = False) -> List['ForumPost']:
+    def from_thread(
+        cls,
+        thread_id: int,
+        page: int = 1,
+        limit: int = 50,
+        include_dead: bool = False,
+    ) -> List['ForumPost']:
         return cls.get_many(
             key=cls.__cache_key_of_thread__.format(id=thread_id),
             filter=cls.thread_id == thread_id,
             order=cls.id.asc(),  # type: ignore
             page=page,
             limit=limit,
-            include_dead=include_dead)
+            include_dead=include_dead,
+        )
 
     @classmethod
     def get_ids_from_thread(cls, id):
         return cls.get_pks_of_many(
             key=cls.__cache_key_of_thread__.format(id=id),
             filter=cls.thread_id == id,
-            order=cls.id.asc())
+            order=cls.id.asc(),
+        )
 
     @classmethod
-    def new(cls,
-            *,
-            thread_id: int,
-            user_id: int,
-            contents: str) -> Optional['ForumPost']:
+    def new(
+        cls, *, thread_id: int, user_id: int, contents: str
+    ) -> Optional['ForumPost']:
         ForumThread.is_valid(thread_id, error=True)
         User.is_valid(user_id, error=True)
         cache.delete(cls.__cache_key_of_thread__.format(id=thread_id))
         post = super()._new(
-            thread_id=thread_id,
-            user_id=user_id,
-            contents=contents)
+            thread_id=thread_id, user_id=user_id, contents=contents
+        )
         send_subscription_notices(post)
         check_post_contents_for_quotes(post)
         check_post_contents_for_mentions(post)
@@ -416,34 +500,33 @@ class ForumPostEditHistory(db.Model, SinglePKMixin):
     __cache_key_of_post__ = 'forums_posts_edit_history_posts_{id}'
 
     id: int = db.Column(db.Integer, primary_key=True)
-    post_id: int = db.Column(db.Integer, db.ForeignKey('forums_posts.id'), nullable=False)
+    post_id: int = db.Column(
+        db.Integer, db.ForeignKey('forums_posts.id'), nullable=False
+    )
     editor_id: int = db.Column(db.Integer, db.ForeignKey('users.id'))
     contents: str = db.Column(db.Text, nullable=False)
     time: datetime = db.Column(
-        db.DateTime(timezone=True), nullable=False, server_default=func.now())
+        db.DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     @classmethod
     def from_post(cls, post_id: int) -> List['ForumPostEditHistory']:
         return cls.get_many(
             key=cls.__cache_key_of_post__.format(id=post_id),
             filter=cls.post_id == post_id,
-            order=cls.id.desc())  # type: ignore
+            order=cls.id.desc(),
+        )  # type: ignore
 
     @classmethod
-    def new(cls,
-            *,
-            post_id: int,
-            editor_id: int,
-            contents: str,
-            time: datetime) -> Optional[ForumPost]:
+    def new(
+        cls, *, post_id: int, editor_id: int, contents: str, time: datetime
+    ) -> Optional[ForumPost]:
         ForumPost.is_valid(post_id, error=True)
         User.is_valid(editor_id, error=True)
         cache.delete(cls.__cache_key_of_post__.format(id=post_id))
         return super()._new(
-            post_id=post_id,
-            editor_id=editor_id,
-            contents=contents,
-            time=time)
+            post_id=post_id, editor_id=editor_id, contents=contents, time=time
+        )
 
     @cached_property
     def editor(self) -> User:
@@ -454,18 +537,24 @@ class ForumLastViewedPost(db.Model):
     __tablename__ = 'last_viewed_forum_posts'
     __cache_key__ = 'last_viewed_forum_post_{thread_id}_{user_id}'
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    thread_id = db.Column(db.Integer, db.ForeignKey('forums_threads.id'), primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True
+    )
+    thread_id = db.Column(
+        db.Integer, db.ForeignKey('forums_threads.id'), primary_key=True
+    )
     post_id = db.Column(db.Integer, db.ForeignKey('forums_posts.id'))
 
     @classmethod
     def post_from_attrs(cls, thread_id, user_id):
-        cache_key = cls.__cache_key__.format(thread_id=thread_id, user_id=user_id)
+        cache_key = cls.__cache_key__.format(
+            thread_id=thread_id, user_id=user_id
+        )
         post_id = cache.get(cache_key)
         if not post_id:
-            last_viewed = cls.query.filter(and_(
-                (cls.thread_id == thread_id),
-                (cls.user_id == user_id))).scalar()
+            last_viewed = cls.query.filter(
+                and_((cls.thread_id == thread_id), (cls.user_id == user_id))
+            ).scalar()
             post_id = last_viewed.post_id if last_viewed else None
         post = ForumPost.from_pk(post_id, include_dead=True)
         if not post:
@@ -475,8 +564,10 @@ class ForumLastViewedPost(db.Model):
                 filter=and_(
                     (ForumPost.thread_id == thread_id),
                     (ForumPost.id < post.id),
-                    (ForumPost.deleted == 'f')),
-                order=ForumPost.id.desc())  # type: ignore
+                    (ForumPost.deleted == 'f'),
+                ),
+                order=ForumPost.id.desc(),
+            )  # type: ignore
         cache.set(cache_key, post.id if post else None)
         return post
 
@@ -486,28 +577,30 @@ class ForumSubscription(db.Model, MultiPKMixin):
     __cache_key_users__ = 'forums_forums_subscriptions_{forum_id}_users'
     __cache_key_of_user__ = 'forums_forums_subscriptions_{user_id}'
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    forum_id = db.Column(db.Integer, db.ForeignKey('forums.id'), primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True
+    )
+    forum_id = db.Column(
+        db.Integer, db.ForeignKey('forums.id'), primary_key=True
+    )
 
     @classmethod
-    def new(cls,
-            *,
-            user_id: int,
-            forum_id: int) -> Optional['ForumSubscription']:
+    def new(
+        cls, *, user_id: int, forum_id: int
+    ) -> Optional['ForumSubscription']:
         Forum.is_valid(forum_id, error=True)
         User.is_valid(user_id, error=True)
         cache.delete(cls.__cache_key_users__.format(forum_id=forum_id))
         cache.delete(cls.__cache_key_of_user__.format(user_id=user_id))
-        return super()._new(
-            user_id=user_id,
-            forum_id=forum_id)
+        return super()._new(user_id=user_id, forum_id=forum_id)
 
     @classmethod
     def user_ids_from_forum(cls, id: int) -> List[int]:
         return cls.get_col_from_many(
             key=cls.__cache_key_users__.format(forum_id=id),
             column=cls.user_id,
-            filter=cls.forum_id == id)
+            filter=cls.forum_id == id,
+        )
 
 
 class ForumThreadSubscription(db.Model, MultiPKMixin):
@@ -515,33 +608,35 @@ class ForumThreadSubscription(db.Model, MultiPKMixin):
     __cache_key_users__ = 'forums_threads_subscriptions_{thread_id}_users'
     __cache_key_of_user__ = 'forums_threads_subscriptions_{user_id}'
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    thread_id = db.Column(db.Integer, db.ForeignKey('forums_threads.id'), primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True
+    )
+    thread_id = db.Column(
+        db.Integer, db.ForeignKey('forums_threads.id'), primary_key=True
+    )
 
     @classmethod
-    def new(cls,
-            *,
-            user_id: int,
-            thread_id: int) -> Optional['ForumThreadSubscription']:
+    def new(
+        cls, *, user_id: int, thread_id: int
+    ) -> Optional['ForumThreadSubscription']:
         ForumThread.is_valid(thread_id, error=True)
         User.is_valid(user_id, error=True)
         cache.delete(cls.__cache_key_users__.format(thread_id=thread_id))
         cache.delete(cls.__cache_key_of_user__.format(user_id=user_id))
-        return super()._new(
-            user_id=user_id,
-            thread_id=thread_id)
+        return super()._new(user_id=user_id, thread_id=thread_id)
 
     @classmethod
     def user_ids_from_thread(cls, id: int) -> List[int]:
         return cls.get_col_from_many(
             key=cls.__cache_key_users__.format(thread_id=id),
             column=cls.user_id,
-            filter=cls.thread_id == id)
+            filter=cls.thread_id == id,
+        )
 
     @classmethod
-    def clear_cache_keys(cls,
-                         user_ids: List[int] = None,
-                         thread_id: int = None) -> None:
+    def clear_cache_keys(
+        cls, user_ids: List[int] = None, thread_id: int = None
+    ) -> None:
         """
         Clear the cache keys associated with specific users and/or threads. Clearing a thread
         cache key also clears the cache keys for all of its users
@@ -549,12 +644,19 @@ class ForumThreadSubscription(db.Model, MultiPKMixin):
         :param user_ids: The IDs of the users whose cache keys should be cleared
         :param thread_id: The ID of the thread for which the cache key should be cleared
         """
-        user_ids = user_ids or []  # Don't put a mutable object as default kwarg!
+        user_ids = (
+            user_ids or []
+        )  # Don't put a mutable object as default kwarg!
         if thread_id:
             cache.delete(cls.__cache_key_users__.format(thread_id=thread_id))
             user_ids += cls.user_ids_from_thread(thread_id)
         if user_ids:
-            cache.delete_many(*(cls.__cache_key_of_user__.format(user_id=uid) for uid in user_ids))
+            cache.delete_many(
+                *(
+                    cls.__cache_key_of_user__.format(user_id=uid)
+                    for uid in user_ids
+                )
+            )
 
 
 class ForumThreadNote(db.Model, SinglePKMixin):
@@ -565,31 +667,32 @@ class ForumThreadNote(db.Model, SinglePKMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     thread_id = db.Column(
-        db.Integer, db.ForeignKey('forums_threads.id'), nullable=False, index=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey('users.id'), nullable=False)
+        db.Integer,
+        db.ForeignKey('forums_threads.id'),
+        nullable=False,
+        index=True,
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     note = db.Column(db.Text, nullable=False)
-    time = db.Column(db.DateTime(timezone=True), nullable=False, server_default=func.now())
+    time = db.Column(
+        db.DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     @classmethod
     def from_thread(cls, thread_id: int) -> List['ForumThreadNote']:
         return cls.get_many(
             key=cls.__cache_key_of_thread__.format(thread_id=thread_id),
             filter=cls.thread_id == thread_id,
-            order=cls.time.desc())  # type: ignore
+            order=cls.time.desc(),
+        )  # type: ignore
 
     @classmethod
-    def new(cls,
-            *,
-            thread_id: int,
-            user_id: int,
-            note: str) -> 'ForumThreadNote':
+    def new(
+        cls, *, thread_id: int, user_id: int, note: str
+    ) -> 'ForumThreadNote':
         ForumThread.is_valid(thread_id, error=True)
         User.is_valid(user_id, error=True)
-        return super()._new(
-            thread_id=thread_id,
-            user_id=user_id,
-            note=note)
+        return super()._new(thread_id=thread_id, user_id=user_id, note=note)
 
     @cached_property
     def user(self):
@@ -604,37 +707,41 @@ class ForumPoll(db.Model, SinglePKMixin):
     __cache_key_of_thread__ = 'forums_polls_threads_{thread_id}'
 
     id: int = db.Column(db.Integer, primary_key=True)
-    thread_id: int = db.Column(db.Integer, db.ForeignKey('forums_threads.id'), unique=True)
+    thread_id: int = db.Column(
+        db.Integer, db.ForeignKey('forums_threads.id'), unique=True
+    )
     question: str = db.Column(db.Text, nullable=False)
     closed: bool = db.Column(db.Boolean, nullable=False, server_default='f')
     featured: bool = db.Column(db.Boolean, nullable=False, server_default='f')
 
     @declared_attr
     def __table_args__(cls) -> tuple:
-        return db.Index('ix_polls_featured', cls.featured, unique=True,
-                        postgresql_where=cls.featured == 't'),
+        return (
+            db.Index(
+                'ix_polls_featured',
+                cls.featured,
+                unique=True,
+                postgresql_where=cls.featured == 't',
+            ),
+        )
 
     @classmethod
     def from_thread(cls, thread_id: int) -> Optional['ForumPoll']:
         return cls.from_query(
             key=cls.__cache_key_of_thread__.format(thread_id=thread_id),
-            filter=cls.thread_id == thread_id)
+            filter=cls.thread_id == thread_id,
+        )
 
     @classmethod
     def get_featured(cls) -> Optional['ForumPoll']:
         return cls.from_query(
-            key=cls.__cache_key_featured__,
-            filter=cls.featured == 't')
+            key=cls.__cache_key_featured__, filter=cls.featured == 't'
+        )
 
     @classmethod
-    def new(cls,
-            *,
-            thread_id: int,
-            question: str) -> 'ForumPoll':
+    def new(cls, *, thread_id: int, question: str) -> 'ForumPoll':
         ForumThread.is_valid(thread_id, error=True)
-        return cls._new(
-            thread_id=thread_id,
-            question=question)
+        return cls._new(thread_id=thread_id, question=question)
 
     @classmethod
     def unfeature_existing(cls) -> None:
@@ -652,9 +759,7 @@ class ForumPoll(db.Model, SinglePKMixin):
     def thread(self):
         return ForumThread.from_pk(self.thread_id)
 
-    def can_access(self,
-                   permission: str = None,
-                   error: bool = False) -> bool:
+    def can_access(self, permission: str = None, error: bool = False) -> bool:
         access = self.thread is not None
         if not access and error:
             raise _403Exception
@@ -669,7 +774,9 @@ class ForumPollChoice(db.Model, SinglePKMixin):
     __cache_key_answers__ = 'forums_polls_{id}_answers'
 
     id = db.Column(db.Integer, primary_key=True)
-    poll_id = db.Column(db.Integer, db.ForeignKey('forums_polls.id'), nullable=False)
+    poll_id = db.Column(
+        db.Integer, db.ForeignKey('forums_polls.id'), nullable=False
+    )
     choice = db.Column(db.Text, nullable=False)
 
     @classmethod
@@ -677,29 +784,26 @@ class ForumPollChoice(db.Model, SinglePKMixin):
         return cls.get_many(
             key=cls.__cache_key_of_poll__.format(poll_id=poll_id),
             filter=cls.poll_id == poll_id,
-            order=cls.id.asc())
+            order=cls.id.asc(),
+        )
 
     @classmethod
-    def new(cls,
-            *,
-            poll_id: int,
-            choice: str) -> 'ForumPollChoice':
+    def new(cls, *, poll_id: int, choice: str) -> 'ForumPollChoice':
         ForumPoll.is_valid(poll_id, error=True)
         cache.delete(cls.__cache_key_of_poll__.format(poll_id=poll_id))
-        return cls._new(
-            poll_id=poll_id,
-            choice=choice)
+        return cls._new(poll_id=poll_id, choice=choice)
 
     @classmethod
-    def is_valid_choice(cls,
-                        pk: int,
-                        poll_id: int,
-                        error: bool = False) -> bool:
+    def is_valid_choice(
+        cls, pk: int, poll_id: int, error: bool = False
+    ) -> bool:
         poll = ForumPoll.from_pk(poll_id, _404=True)
         choice = ForumPollChoice.from_pk(pk, _404=True)
         if poll.id != choice.poll_id:
             if error:
-                raise APIException(f'Poll {poll_id} has no answer choice {pk}.')
+                raise APIException(
+                    f'Poll {poll_id} has no answer choice {pk}.'
+                )
             return False  # pragma: no cover
         return True
 
@@ -712,36 +816,42 @@ class ForumPollChoice(db.Model, SinglePKMixin):
         return self.count(
             key=self.__cache_key_answers__.format(id=self.id),
             attribute=ForumPollAnswer.user_id,
-            filter=ForumPollAnswer.choice_id == self.id)
+            filter=ForumPollAnswer.choice_id == self.id,
+        )
 
     def delete_answers(self):
         db.session.execute(
             ForumPollAnswer.__table__.delete().where(
-                ForumPollAnswer.choice_id == self.id))
+                ForumPollAnswer.choice_id == self.id
+            )
+        )
         cache.delete(self.__cache_key_answers__.format(id=self.id))
 
 
 class ForumPollAnswer(db.Model, MultiPKMixin):
     __tablename__ = 'forums_polls_answers'
 
-    poll_id = db.Column(db.Integer, db.ForeignKey('forums_polls.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    choice_id = db.Column(db.Integer, db.ForeignKey('forums_polls_choices.id'), nullable=False)
+    poll_id = db.Column(
+        db.Integer, db.ForeignKey('forums_polls.id'), primary_key=True
+    )
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True
+    )
+    choice_id = db.Column(
+        db.Integer, db.ForeignKey('forums_polls_choices.id'), nullable=False
+    )
 
     @classmethod
-    def new(cls,
-            *,
-            poll_id: int,
-            user_id: int,
-            choice_id: bool) -> 'ForumPollAnswer':
+    def new(
+        cls, *, poll_id: int, user_id: int, choice_id: bool
+    ) -> 'ForumPollAnswer':
         User.is_valid(user_id, error=True)
         # ForumPollChoice also validates ForumPoll.
         ForumPollChoice.is_valid_choice(choice_id, poll_id=poll_id, error=True)
         if cls.from_attrs(poll_id=poll_id, user_id=user_id):
             raise APIException('You have already voted for this poll.')
 
-        cache.delete(ForumPollChoice.__cache_key_answers__.format(id=choice_id))
-        return cls._new(
-            poll_id=poll_id,
-            user_id=user_id,
-            choice_id=choice_id)
+        cache.delete(
+            ForumPollChoice.__cache_key_answers__.format(id=choice_id)
+        )
+        return cls._new(poll_id=poll_id, user_id=user_id, choice_id=choice_id)

@@ -5,8 +5,12 @@ import pytest
 from conftest import add_permissions, check_dictionary, check_json_response
 from core import APIException, NewJSONEncoder, _403Exception, cache, db
 from core.users.models import User
-from forums.models import (ForumLastViewedPost, ForumPost, ForumThread,
-                           ForumThreadSubscription)
+from forums.models import (
+    ForumLastViewedPost,
+    ForumPost,
+    ForumThread,
+    ForumThreadSubscription,
+)
 
 
 def test_user_thread_count(app, client):
@@ -25,13 +29,17 @@ def test_thread_from_pk_deleted(app, authed_client):
 
 
 def test_thread_no_permissions(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     with pytest.raises(_403Exception):
         ForumThread.from_pk(1, error=True)
 
 
 def test_thread_can_access_implicit_forum(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     add_permissions(app, 'forumaccess_forum_1')
     thread = ForumThread.from_pk(1)
     assert thread.id == 1
@@ -39,10 +47,14 @@ def test_thread_can_access_implicit_forum(app, authed_client):
 
 
 def test_thread_can_access_explicit_disallow(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     add_permissions(app, 'forumaccess_forum_1')
-    db.session.execute("""INSERT INTO users_permissions (user_id, permission, granted)
-                       VALUES (1, 'forumaccess_thread_1', 'f')""")
+    db.session.execute(
+        """INSERT INTO users_permissions (user_id, permission, granted)
+                       VALUES (1, 'forumaccess_thread_1', 'f')"""
+    )
     with pytest.raises(_403Exception):
         ForumThread.from_pk(1, error=True)
 
@@ -68,14 +80,19 @@ def test_thread_get_from_forum(app, authed_client):
 
 
 def test_thread_get_from_forum_no_perms(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     threads = ForumThread.from_forum(1, page=1, limit=50)
     assert len(threads) == 0
 
 
 def test_thread_get_from_forum_cached(app, authed_client):
-    cache.set(ForumThread.__cache_key_of_forum__.format(id=2), [1, 5], timeout=60)
-    ForumThread.from_pk(1); ForumThread.from_pk(5)  # noqa cache these
+    cache.set(
+        ForumThread.__cache_key_of_forum__.format(id=2), [1, 5], timeout=60
+    )
+    ForumThread.from_pk(1)
+    ForumThread.from_pk(5)  # noqa cache these
     threads = ForumThread.from_forum(2, page=1, limit=50)
     assert len(threads) == 2
 
@@ -88,10 +105,8 @@ def test_thread_get_from_forum_cached(app, authed_client):
 
 def test_new_thread(app, authed_client):
     thread = ForumThread.new(
-        topic='NewForumThread',
-        forum_id=2,
-        creator_id=1,
-        post_contents='aaaa')
+        topic='NewForumThread', forum_id=2, creator_id=1, post_contents='aaaa'
+    )
     assert thread.topic == 'NewForumThread'
     assert thread.forum_id == 2
     assert thread.creator_id == 1
@@ -100,21 +115,18 @@ def test_new_thread(app, authed_client):
     assert thread.posts[0].contents == 'aaaa'
 
 
-@pytest.mark.parametrize(
-    'forum_id, creator_id', [
-        (10, 1), (3, 1), (1, 6)])
+@pytest.mark.parametrize('forum_id, creator_id', [(10, 1), (3, 1), (1, 6)])
 def test_new_thread_failure(app, authed_client, forum_id, creator_id):
     with pytest.raises(APIException):
         ForumThread.new(
             topic='NewForumThread',
             forum_id=forum_id,
             creator_id=creator_id,
-            post_contents='a')
+            post_contents='a',
+        )
 
 
-@pytest.mark.parametrize(
-    'thread_id, count', [
-        (1, 0), (5, 1)])
+@pytest.mark.parametrize('thread_id, count', [(1, 0), (5, 1)])
 def test_thread_post_count(app, authed_client, thread_id, count):
     assert ForumThread.from_pk(thread_id).post_count == count
 
@@ -177,7 +189,8 @@ def test_thread_last_viewed_post_none(app, authed_client):
     thread = ForumThread.from_pk(1)
     assert thread.last_viewed_post is None
     assert not cache.get(
-        ForumLastViewedPost.__cache_key__.format(thread_id=1, user_id=1))
+        ForumLastViewedPost.__cache_key__.format(thread_id=1, user_id=1)
+    )
 
 
 def test_thread_last_viewed_post(app, authed_client):
@@ -185,19 +198,22 @@ def test_thread_last_viewed_post(app, authed_client):
     last_post = thread.last_viewed_post
     assert last_post.id == 2
     assert last_post.thread_id == 3
-    assert 2 == cache.get(ForumLastViewedPost.__cache_key__.format(
-        thread_id=3, user_id=1))
+    assert 2 == cache.get(
+        ForumLastViewedPost.__cache_key__.format(thread_id=3, user_id=1)
+    )
 
 
 def test_thread_last_viewed_post_cached(app, authed_client):
-    cache.set(ForumLastViewedPost.__cache_key__.format(
-        thread_id=1, user_id=1), 2)
+    cache.set(
+        ForumLastViewedPost.__cache_key__.format(thread_id=1, user_id=1), 2
+    )
     thread = ForumThread.from_pk(1)
     last_post = thread.last_viewed_post
     assert last_post.id == 2
     assert last_post.thread_id == 3
-    assert 2 == cache.get(ForumLastViewedPost.__cache_key__.format(
-        thread_id=1, user_id=1))
+    assert 2 == cache.get(
+        ForumLastViewedPost.__cache_key__.format(thread_id=1, user_id=1)
+    )
 
 
 def test_thread_last_viewed_post_deleted(app, authed_client):
@@ -205,8 +221,9 @@ def test_thread_last_viewed_post_deleted(app, authed_client):
     last_post = thread.last_viewed_post
     assert last_post.id == 3
     assert last_post.thread_id == 5
-    assert 3 == cache.get(ForumLastViewedPost.__cache_key__.format(
-        thread_id=5, user_id=1))
+    assert 3 == cache.get(
+        ForumLastViewedPost.__cache_key__.format(thread_id=5, user_id=1)
+    )
 
 
 def test_thread_last_viewed_none_available(app, authed_client):
@@ -217,30 +234,29 @@ def test_thread_last_viewed_none_available(app, authed_client):
 
 def test_add_thread_note(app, authed_client):
     add_permissions(app, 'forums_threads_modify')
-    response = authed_client.post('/forums/threads/1/notes', data=json.dumps({
-        'note': 'ANotherNote',
-        }))
-    check_json_response(response, {
-        'id': 4,
-        'note': 'ANotherNote',
-        })
+    response = authed_client.post(
+        '/forums/threads/1/notes', data=json.dumps({'note': 'ANotherNote'})
+    )
+    check_json_response(response, {'id': 4, 'note': 'ANotherNote'})
     assert response.get_json()['response']['user']['id'] == 1
 
 
 def test_add_thread_note_nonexistent_thread(app, authed_client):
     add_permissions(app, 'forums_threads_modify')
-    response = authed_client.post('/forums/threads/99/notes', data=json.dumps({
-        'note': 'ANotherNote',
-        }))
+    response = authed_client.post(
+        '/forums/threads/99/notes', data=json.dumps({'note': 'ANotherNote'})
+    )
     check_json_response(response, 'Invalid ForumThread id.')
 
 
 def test_add_thread_note_no_permissions(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     add_permissions(app, 'forums_threads_modify')
-    response = authed_client.post('/forums/threads/1/notes', data=json.dumps({
-        'note': 'ANotherNote',
-        }))
+    response = authed_client.post(
+        '/forums/threads/1/notes', data=json.dumps({'note': 'ANotherNote'})
+    )
     check_json_response(response, 'Invalid ForumThread id.')
 
 
@@ -252,7 +268,10 @@ def test_thread_subscriptions(app, authed_client):
     threads = ForumThread.from_subscribed_user(1)
     assert all(t.id in {1, 3, 4} for t in threads)
     assert {1, 3, 4} == set(
-        cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1)))
+        cache.get(
+            ForumThreadSubscription.__cache_key_of_user__.format(user_id=1)
+        )
+    )
 
 
 def test_user_ids_from_thread_subscription(app, authed_client):
@@ -262,42 +281,79 @@ def test_user_ids_from_thread_subscription(app, authed_client):
 
 def test_forum_thread_subscriptions_cache_keys_thread_id(app, authed_client):
     user_ids = ForumThreadSubscription.user_ids_from_thread(4)  # noqa
-    cache.set(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1), [14, 23])
-    cache.set(ForumThreadSubscription.__cache_key_users__.format(thread_id=4), [3, 4, 5])
-    assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
+    cache.set(
+        ForumThreadSubscription.__cache_key_of_user__.format(user_id=1),
+        [14, 23],
+    )
+    cache.set(
+        ForumThreadSubscription.__cache_key_users__.format(thread_id=4),
+        [3, 4, 5],
+    )
+    assert 3 == len(
+        cache.get(
+            ForumThreadSubscription.__cache_key_users__.format(thread_id=4)
+        )
+    )
     ForumThreadSubscription.clear_cache_keys(thread_id=4)
-    assert 2 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
-    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
+    assert 2 == len(
+        cache.get(
+            ForumThreadSubscription.__cache_key_users__.format(thread_id=4)
+        )
+    )
+    assert not cache.get(
+        ForumThreadSubscription.__cache_key_of_user__.format(user_id=1)
+    )
 
 
 def test_forum_thread_subscriptions_cache_keys_user_ids(app, authed_client):
     user_ids = ForumThreadSubscription.user_ids_from_thread(4)  # noqa
-    cache.set(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1), [14, 23])
-    cache.set(ForumThreadSubscription.__cache_key_users__.format(thread_id=4), [3, 4, 5])
-    assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
+    cache.set(
+        ForumThreadSubscription.__cache_key_of_user__.format(user_id=1),
+        [14, 23],
+    )
+    cache.set(
+        ForumThreadSubscription.__cache_key_users__.format(thread_id=4),
+        [3, 4, 5],
+    )
+    assert 3 == len(
+        cache.get(
+            ForumThreadSubscription.__cache_key_users__.format(thread_id=4)
+        )
+    )
     ForumThreadSubscription.clear_cache_keys(user_ids=[1, 2])
-    assert 3 == len(cache.get(ForumThreadSubscription.__cache_key_users__.format(thread_id=4)))
-    assert not cache.get(ForumThreadSubscription.__cache_key_of_user__.format(user_id=1))
+    assert 3 == len(
+        cache.get(
+            ForumThreadSubscription.__cache_key_users__.format(thread_id=4)
+        )
+    )
+    assert not cache.get(
+        ForumThreadSubscription.__cache_key_of_user__.format(user_id=1)
+    )
 
 
 def test_serialize_no_perms(app, authed_client):
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder().default(thread)
-    check_dictionary(data, {
-        'id': 3,
-        'topic': 'Using PHP',
-        'locked': True,
-        'sticky': True,
-        'post_count': 1,
-        'subscribed': True
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 3,
+            'topic': 'Using PHP',
+            'locked': True,
+            'sticky': True,
+            'post_count': 1,
+            'subscribed': True,
+        },
+    )
     assert 'forum' in data and data['forum']['id'] == 2
     assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
-    assert ('posts' in data
-            and len(data['posts']) == 1
-            and data['posts'][0]['id'] == 2)
+    assert (
+        'posts' in data
+        and len(data['posts']) == 1
+        and data['posts'][0]['id'] == 2
+    )
     assert 'created_time' in data and isinstance(data['created_time'], int)
     assert 'poll' in data and data['poll']['id'] == 3
 
@@ -306,69 +362,88 @@ def test_serialize_detailed(app, authed_client):
     add_permissions(app, 'forums_threads_modify')
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder().default(thread)
-    check_dictionary(data, {
-        'id': 3,
-        'topic': 'Using PHP',
-        'locked': True,
-        'sticky': True,
-        'post_count': 1,
-        'subscribed': True,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 3,
+            'topic': 'Using PHP',
+            'locked': True,
+            'sticky': True,
+            'post_count': 1,
+            'subscribed': True,
+        },
+    )
     assert 'forum' in data and data['forum']['id'] == 2
     assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
-    assert ('posts' in data
-            and len(data['posts']) == 1
-            and data['posts'][0]['id'] == 2)
+    assert (
+        'posts' in data
+        and len(data['posts']) == 1
+        and data['posts'][0]['id'] == 2
+    )
     assert 'created_time' in data and isinstance(data['created_time'], int)
     assert 'poll' in data and data['poll']['id'] == 3
-    assert ('thread_notes' in data
-            and len(data['thread_notes']) == 1
-            and data['thread_notes'][0]['id'] == 3)
+    assert (
+        'thread_notes' in data
+        and len(data['thread_notes']) == 1
+        and data['thread_notes'][0]['id'] == 3
+    )
 
 
 def test_serialize_very_detailed(app, authed_client):
-    add_permissions(app, 'forums_threads_modify', 'forums_threads_modify_advanced')
+    add_permissions(
+        app, 'forums_threads_modify', 'forums_threads_modify_advanced'
+    )
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder().default(thread)
-    check_dictionary(data, {
-        'id': 3,
-        'topic': 'Using PHP',
-        'locked': True,
-        'sticky': True,
-        'deleted': False,
-        'post_count': 1,
-        'subscribed': True,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 3,
+            'topic': 'Using PHP',
+            'locked': True,
+            'sticky': True,
+            'deleted': False,
+            'post_count': 1,
+            'subscribed': True,
+        },
+    )
     assert 'forum' in data and data['forum']['id'] == 2
     assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2
-    assert ('posts' in data
-            and len(data['posts']) == 1
-            and data['posts'][0]['id'] == 2)
+    assert (
+        'posts' in data
+        and len(data['posts']) == 1
+        and data['posts'][0]['id'] == 2
+    )
     assert 'created_time' in data and isinstance(data['created_time'], int)
     assert 'poll' in data and data['poll']['id'] == 3
     assert 'thread_notes' in data
-    assert ('thread_notes' in data
-            and len(data['thread_notes']) == 1
-            and data['thread_notes'][0]['id'] == 3)
+    assert (
+        'thread_notes' in data
+        and len(data['thread_notes']) == 1
+        and data['thread_notes'][0]['id'] == 3
+    )
 
 
 def test_serialize_nested(app, authed_client):
     add_permissions(app, 'forums_threads_modify_advanced')
     thread = ForumThread.from_pk(3)
     data = NewJSONEncoder()._objects_to_dict(thread.serialize(nested=True))
-    check_dictionary(data, {
-        'id': 3,
-        'topic': 'Using PHP',
-        'locked': True,
-        'sticky': True,
-        'deleted': False,
-        'post_count': 1,
-        'subscribed': True,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 3,
+            'topic': 'Using PHP',
+            'locked': True,
+            'sticky': True,
+            'deleted': False,
+            'post_count': 1,
+            'subscribed': True,
+        },
+    )
     assert 'creator' in data and data['creator']['id'] == 2
     assert 'last_post' in data and data['last_post']['id'] == 2
     assert 'last_viewed_post' in data and data['last_viewed_post']['id'] == 2

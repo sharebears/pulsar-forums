@@ -37,23 +37,30 @@ def view_post(id: int) -> flask.Response:
     :statuscode 403: User does not have permission to view post
     :statuscode 404: Post does not exist
     """
-    return flask.jsonify(ForumPost.from_pk(
-        id,
-        _404=True,
-        include_dead=flask.g.user.has_permission('forums_posts_modify_advanced')))
+    return flask.jsonify(
+        ForumPost.from_pk(
+            id,
+            _404=True,
+            include_dead=flask.g.user.has_permission(
+                'forums_posts_modify_advanced'
+            ),
+        )
+    )
 
 
-CREATE_FORUM_POST_SCHEMA = Schema({
-    'contents': All(str, PostLength(max=256000)),
-    'thread_id': All(int, Range(min=0, max=2147483648)),
-    }, required=True)
+CREATE_FORUM_POST_SCHEMA = Schema(
+    {
+        'contents': All(str, PostLength(max=256000)),
+        'thread_id': All(int, Range(min=0, max=2147483648)),
+    },
+    required=True,
+)
 
 
 @bp.route('/forums/posts', methods=['POST'])
 @require_permission('forums_posts_create')
 @validate_data(CREATE_FORUM_POST_SCHEMA)
-def create_post(contents: str,
-                thread_id: int) -> flask.Response:
+def create_post(contents: str, thread_id: int) -> flask.Response:
     """
     This is the endpoint for forum posting. The ``forums_posts_modify``
     permission is required to access this endpoint.
@@ -86,39 +93,44 @@ def create_post(contents: str,
     :statuscode 400: Creation unsuccessful
     """
     thread = ForumThread.from_pk(thread_id, _404=True)
-    if thread.locked and not flask.g.user.has_permission('forums_post_in_locked'):
+    if thread.locked and not flask.g.user.has_permission(
+        'forums_post_in_locked'
+    ):
         raise APIException('You cannot post in a locked thread.')
     thread_last_post = thread.last_post
-    if (thread_last_post
-            and thread_last_post.user_id == flask.g.user.id
-            and not flask.g.user.has_permission('forums_posts_double')):
+    if (
+        thread_last_post
+        and thread_last_post.user_id == flask.g.user.id
+        and not flask.g.user.has_permission('forums_posts_double')
+    ):
         if len(thread_last_post.contents) + len(contents) > 255997:
-            raise APIException('Post could not be merged into previous post '
-                               '(must be <256,000 characters combined).')
+            raise APIException(
+                'Post could not be merged into previous post '
+                '(must be <256,000 characters combined).'
+            )
         return modify_post(
             id=thread_last_post.id,
             contents=f'{thread_last_post.contents}\n\n\n{contents}',
-            skip_validation=True)
+            skip_validation=True,
+        )
 
     post = ForumPost.new(
-        thread_id=thread_id,
-        user_id=flask.g.user.id,
-        contents=contents)
+        thread_id=thread_id, user_id=flask.g.user.id, contents=contents
+    )
     return flask.jsonify(post)
 
 
-MODIFY_FORUM_POST_SCHEMA = Schema({
-    'sticky': bool,
-    'contents': All(str, Length(max=250000)),
-    })
+MODIFY_FORUM_POST_SCHEMA = Schema(
+    {'sticky': bool, 'contents': All(str, Length(max=250000))}
+)
 
 
 @bp.route('/forums/posts/<int:id>', methods=['PUT'])
 @require_permission('forums_posts_create')
 @validate_data(MODIFY_FORUM_POST_SCHEMA)
-def modify_post(id: int,
-                sticky: bool = None,
-                contents: str = None) -> flask.Response:
+def modify_post(
+    id: int, sticky: bool = None, contents: str = None
+) -> flask.Response:
     """
     This is the endpoint for forum post editing. The ``forums_posts_modify``
     permission is required to access this endpoint. Posts can be marked
@@ -157,14 +169,17 @@ def modify_post(id: int,
     thread = ForumThread.from_pk(post.thread_id)
     if not thread:
         raise APIException(f'ForumPost {id} does not exist.')
-    if thread.locked and not flask.g.user.has_permission('forums_posts_modify'):
+    if thread.locked and not flask.g.user.has_permission(
+        'forums_posts_modify'
+    ):
         raise APIException('You cannot modify posts in a locked thread.')
     if contents is not None:
         ForumPostEditHistory.new(
             post_id=post.id,
             editor_id=post.edited_user_id or post.user_id,
             contents=post.contents,
-            time=datetime.utcnow().replace(tzinfo=pytz.utc))
+            time=datetime.utcnow().replace(tzinfo=pytz.utc),
+        )
         post.contents = contents
         post.edited_user_id = flask.g.user.id
         post.edited_time = datetime.utcnow().replace(tzinfo=pytz.utc)

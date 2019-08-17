@@ -2,7 +2,12 @@ import flask
 
 from core import APIException, cache, db
 from core.utils import require_permission
-from forums.models import Forum, ForumSubscription, ForumThread, ForumThreadSubscription
+from forums.models import (
+    Forum,
+    ForumSubscription,
+    ForumThread,
+    ForumThreadSubscription,
+)
 
 from . import bp
 
@@ -34,23 +39,37 @@ def alter_thread_subscription(thread_id: int) -> flask.Response:
     """
     thread = ForumThread.from_pk(thread_id, _404=True)
     subscription = ForumThreadSubscription.from_attrs(
-        user_id=flask.g.user.id,
-        thread_id=thread.id)
+        user_id=flask.g.user.id, thread_id=thread.id
+    )
     if flask.request.method == 'POST':
         if subscription:
-            raise APIException(f'You are already subscribed to thread {thread_id}.')
+            raise APIException(
+                f'You are already subscribed to thread {thread_id}.'
+            )
         ForumThreadSubscription.new(
-            user_id=flask.g.user.id,
-            thread_id=thread_id)
+            user_id=flask.g.user.id, thread_id=thread_id
+        )
         return flask.jsonify(f'Successfully subscribed to thread {thread_id}.')
     else:  # method = DELETE
         if not subscription:
-            raise APIException(f'You are not subscribed to thread {thread_id}.')
+            raise APIException(
+                f'You are not subscribed to thread {thread_id}.'
+            )
         db.session.delete(subscription)
         db.session.commit()
-        cache.delete(ForumThreadSubscription.__cache_key_users__.format(thread_id=thread_id))
-        cache.delete(ForumThreadSubscription.__cache_key_of_user__.format(user_id=flask.g.user.id))
-        return flask.jsonify(f'Successfully unsubscribed from thread {thread_id}.')
+        cache.delete(
+            ForumThreadSubscription.__cache_key_users__.format(
+                thread_id=thread_id
+            )
+        )
+        cache.delete(
+            ForumThreadSubscription.__cache_key_of_user__.format(
+                user_id=flask.g.user.id
+            )
+        )
+        return flask.jsonify(
+            f'Successfully unsubscribed from thread {thread_id}.'
+        )
 
 
 @bp.route('/subscriptions/forums/<int:forum_id>', methods=['POST', 'DELETE'])
@@ -80,23 +99,31 @@ def alter_forum_subscription(forum_id: int) -> flask.Response:
     """
     forum = Forum.from_pk(forum_id, _404=True)
     subscription = ForumSubscription.from_attrs(
-        user_id=flask.g.user.id,
-        forum_id=forum.id)
+        user_id=flask.g.user.id, forum_id=forum.id
+    )
     if flask.request.method == 'POST':
         if subscription:
-            raise APIException(f'You are already subscribed to forum {forum_id}.')
-        ForumSubscription.new(
-            user_id=flask.g.user.id,
-            forum_id=forum_id)
+            raise APIException(
+                f'You are already subscribed to forum {forum_id}.'
+            )
+        ForumSubscription.new(user_id=flask.g.user.id, forum_id=forum_id)
         return flask.jsonify(f'Successfully subscribed to forum {forum_id}.')
     else:  # method = DELETE
         if not subscription:
             raise APIException(f'You are not subscribed to forum {forum_id}.')
         db.session.delete(subscription)
         db.session.commit()
-        cache.delete(ForumSubscription.__cache_key_users__.format(forum_id=forum_id))
-        cache.delete(ForumSubscription.__cache_key_of_user__.format(user_id=flask.g.user.id))
-        return flask.jsonify(f'Successfully unsubscribed from forum {forum_id}.')
+        cache.delete(
+            ForumSubscription.__cache_key_users__.format(forum_id=forum_id)
+        )
+        cache.delete(
+            ForumSubscription.__cache_key_of_user__.format(
+                user_id=flask.g.user.id
+            )
+        )
+        return flask.jsonify(
+            f'Successfully unsubscribed from forum {forum_id}.'
+        )
 
 
 @bp.route('/subscriptions/forums', methods=['GET'])

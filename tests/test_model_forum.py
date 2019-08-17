@@ -21,7 +21,9 @@ def test_forum_cache(app, authed_client):
 
 
 def test_forum_no_permission(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     with pytest.raises(_403Exception):
         Forum.from_pk(1, error=True)
 
@@ -38,14 +40,19 @@ def test_forum_get_from_category(app, authed_client):
 
 
 def test_forum_get_from_category_no_permissions(app, authed_client):
-    db.engine.execute("DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'")
+    db.engine.execute(
+        "DELETE FROM users_permissions WHERE permission LIKE 'forumaccess%%'"
+    )
     forums = Forum.from_category(1)
     assert len(forums) == 0
 
 
 def test_forum_get_from_category_cached(app, authed_client):
-    cache.set(Forum.__cache_key_of_category__.format(id=2), ['1', '5'], timeout=60)
-    Forum.from_pk(1); Forum.from_pk(5)  # noqa: cache these
+    cache.set(
+        Forum.__cache_key_of_category__.format(id=2), ['1', '5'], timeout=60
+    )
+    Forum.from_pk(1)
+    Forum.from_pk(5)  # noqa: cache these
     forums = Forum.from_category(2)
     assert len(forums) == 2
 
@@ -58,30 +65,26 @@ def test_forum_get_from_category_cached(app, authed_client):
 
 def test_new_forum(app, authed_client):
     forum = Forum.new(
-        name='NewForum',
-        description=None,
-        category_id=2,
-        position=100)
+        name='NewForum', description=None, category_id=2, position=100
+    )
     assert forum.name == 'NewForum'
     assert forum.description is None
     assert forum.position == 100
     assert Forum.from_cache(forum.cache_key).id == forum.id == 7
 
 
-@pytest.mark.parametrize(
-    'category_id', [10, 3])
+@pytest.mark.parametrize('category_id', [10, 3])
 def test_new_forum_failure(app, authed_client, category_id):
     with pytest.raises(APIException):
         Forum.new(
             name='NewForum',
             description=None,
             category_id=category_id,
-            position=100)
+            position=100,
+        )
 
 
-@pytest.mark.parametrize(
-    'forum_id, count', [
-        (2, 2), (1, 1), (4, 0)])
+@pytest.mark.parametrize('forum_id, count', [(2, 2), (1, 1), (4, 0)])
 def test_forum_thread_count(app, authed_client, forum_id, count):
     assert Forum.from_pk(forum_id).thread_count == count
 
@@ -132,13 +135,16 @@ def test_users_from_forum_subscription(app, authed_client):
 def test_serialize_no_perms(app, authed_client):
     forum = Forum.from_pk(1)
     data = NewJSONEncoder().default(forum)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Pulsar',
-        'description': 'Stuff about pulsar',
-        'position': 1,
-        'thread_count': 1,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Pulsar',
+            'description': 'Stuff about pulsar',
+            'position': 1,
+            'thread_count': 1,
+        },
+    )
     assert 'category' in data and data['category']['id'] == 1
     assert 'threads' in data and len(data['threads']) == 1
 
@@ -147,14 +153,17 @@ def test_serialize_very_detailed(app, authed_client):
     add_permissions(app, 'forums_forums_modify')
     forum = Forum.from_pk(1)
     data = NewJSONEncoder().default(forum)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Pulsar',
-        'description': 'Stuff about pulsar',
-        'position': 1,
-        'thread_count': 1,
-        'deleted': False,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Pulsar',
+            'description': 'Stuff about pulsar',
+            'position': 1,
+            'thread_count': 1,
+            'deleted': False,
+        },
+    )
     assert 'category' in data and data['category']['id'] == 1
     assert 'threads' in data and len(data['threads']) == 1
 
@@ -163,12 +172,17 @@ def test_serialize_nested(app, authed_client):
     add_permissions(app, 'forums_forums_modify')
     forum = Forum.from_pk(1)
     data = forum.serialize(nested=True)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Pulsar',
-        'description': 'Stuff about pulsar',
-        'position': 1,
-        'thread_count': 1,
-        'deleted': False,
-        })
-    assert 'last_updated_thread' in data and 'id' in data['last_updated_thread']
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Pulsar',
+            'description': 'Stuff about pulsar',
+            'position': 1,
+            'thread_count': 1,
+            'deleted': False,
+        },
+    )
+    assert (
+        'last_updated_thread' in data and 'id' in data['last_updated_thread']
+    )

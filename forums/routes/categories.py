@@ -11,9 +11,7 @@ from . import bp
 app = flask.current_app
 
 
-VIEW_FORUM_CATEGORY_SCHEMA = Schema({
-    'include_dead': BoolGET,
-    })
+VIEW_FORUM_CATEGORY_SCHEMA = Schema({'include_dead': BoolGET})
 
 
 @bp.route('/forums/categories', methods=['GET'])
@@ -45,23 +43,30 @@ def view_categories(include_dead: bool = False) -> flask.Response:
     :statuscode 401: View unsuccessful
     """
     categories = ForumCategory.get_all(
-        include_dead=include_dead and flask.g.user.has_permission('forums_forums_modify'))
+        include_dead=include_dead
+        and flask.g.user.has_permission('forums_forums_modify')
+    )
     return flask.jsonify(categories)
 
 
-ADD_FORUM_CATEGORY_SCHEMA = Schema({
-    'name': All(str, Length(max=32)),
-    Optional('description', default=None): Any(All(str, Length(max=1024)), None),
-    Optional('position', default=0): All(int, Range(min=0, max=99999)),
-    }, required=True)
+ADD_FORUM_CATEGORY_SCHEMA = Schema(
+    {
+        'name': All(str, Length(max=32)),
+        Optional('description', default=None): Any(
+            All(str, Length(max=1024)), None
+        ),
+        Optional('position', default=0): All(int, Range(min=0, max=99999)),
+    },
+    required=True,
+)
 
 
 @bp.route('/forums/categories', methods=['POST'])
 @require_permission('forums_forums_modify')
 @validate_data(ADD_FORUM_CATEGORY_SCHEMA)
-def add_category(name: str,
-                 description: str = None,
-                 position: int = 0) -> flask.Response:
+def add_category(
+    name: str, description: str = None, position: int = 0
+) -> flask.Response:
     """
     This is the endpoint for forum category creation. The ``forums_forums_modify`` permission
     is required to access this endpoint.
@@ -95,26 +100,26 @@ def add_category(name: str,
     :statuscode 400: Creation unsuccessful
     """
     category = ForumCategory.new(
-        name=name,
-        description=description,
-        position=position)
+        name=name, description=description, position=position
+    )
     return flask.jsonify(category)
 
 
-MODIFY_FORUM_CATEGORY_SCHEMA = Schema({
-    'name': All(str, Length(max=32)),
-    'description': All(str, Length(max=1024)),
-    'position': All(int, Range(min=0, max=99999)),
-    })
+MODIFY_FORUM_CATEGORY_SCHEMA = Schema(
+    {
+        'name': All(str, Length(max=32)),
+        'description': All(str, Length(max=1024)),
+        'position': All(int, Range(min=0, max=99999)),
+    }
+)
 
 
 @bp.route('/forums/categories/<int:id>', methods=['PUT'])
 @require_permission('forums_forums_modify')
 @validate_data(MODIFY_FORUM_CATEGORY_SCHEMA)
-def edit_category(id: int,
-                  name: str = None,
-                  description: str = None,
-                  position: int = None) -> flask.Response:
+def edit_category(
+    id: int, name: str = None, description: str = None, position: int = None
+) -> flask.Response:
     """
     This is the endpoint for forum category editing. The ``forums_forums_modify`` permission
     is required to access this endpoint. The name, description, and position of a forum
@@ -189,7 +194,10 @@ def delete_category(id: int) -> flask.Response:
     category = ForumCategory.from_pk(id, _404=True)
     if category.forums:
         raise APIException(
-            'You cannot delete a forum category while it still has forums assigned to it.')
+            'You cannot delete a forum category while it still has forums assigned to it.'
+        )
     category.deleted = True
     db.session.commit()
-    return flask.jsonify(f'ForumCategory {id} ({category.name}) has been deleted.')
+    return flask.jsonify(
+        f'ForumCategory {id} ({category.name}) has been deleted.'
+    )

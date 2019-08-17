@@ -42,23 +42,29 @@ def view_poll(id: int) -> flask.Response:
     return flask.jsonify(ForumPoll.from_pk(id, error=True, _404=True))
 
 
-MODIFY_FORUM_POLL_SCHEMA = Schema({
-    'choices': Schema({
-        Optional('add', default=[]): [str],
-        Optional('delete', default=[]): [int],
-        }),
-    'closed': BoolGET,
-    'featured': BoolGET,
-    })
+MODIFY_FORUM_POLL_SCHEMA = Schema(
+    {
+        'choices': Schema(
+            {
+                Optional('add', default=[]): [str],
+                Optional('delete', default=[]): [int],
+            }
+        ),
+        'closed': BoolGET,
+        'featured': BoolGET,
+    }
+)
 
 
 @bp.route('/polls/<int:id>', methods=['PUT'])
 @require_permission('modify_forum_polls')
 @validate_data(MODIFY_FORUM_POLL_SCHEMA)
-def modify_poll(id: int,
-                choices: Dict[str, list] = None,
-                closed: bool = None,
-                featured: bool = None) -> flask.Response:
+def modify_poll(
+    id: int,
+    choices: Dict[str, list] = None,
+    closed: bool = None,
+    featured: bool = None,
+) -> flask.Response:
     """
     This is the endpoint for forum poll editing. The ``modify_forum_polls``
     permission is required to access this endpoint. The choices can be edited
@@ -106,17 +112,14 @@ def modify_poll(id: int,
     if closed is not None:
         poll.closed = closed
     if choices:
-        change_poll_choices(
-            poll,
-            choices['add'],
-            choices['delete'])
+        change_poll_choices(poll, choices['add'], choices['delete'])
     db.session.commit()
     return flask.jsonify(poll)
 
 
-def change_poll_choices(poll: ForumPoll,
-                        add: List[str],
-                        delete: List[int]) -> None:
+def change_poll_choices(
+    poll: ForumPoll, add: List[str], delete: List[int]
+) -> None:
     """
     Change the choices to a poll. Create new choices or delete existing ones.
     The choices parameter should contain a dictionary of answer name keys and
@@ -129,18 +132,22 @@ def change_poll_choices(poll: ForumPoll,
     poll_choice_ids = {c.id for c in poll.choices}
     errors = {
         'add': {choice for choice in add if choice in poll_choice_choices},
-        'delete': {choice for choice in delete if choice not in poll_choice_ids}
-        }
+        'delete': {
+            choice for choice in delete if choice not in poll_choice_ids
+        },
+    }
 
     error_message = []
     if errors['add']:
         error_message.append(
             f'The following poll choices could not be added: '  # type: ignore
-            f'{", ".join(errors["add"])}.')
+            f'{", ".join(errors["add"])}.'
+        )
     if errors['delete']:
         error_message.append(
             f'The following poll choices could not be deleted: '  # type: ignore
-            f'{", ".join([str(d) for d in errors["delete"]])}.')
+            f'{", ".join([str(d) for d in errors["delete"]])}.'
+        )
     if error_message:
         raise APIException(' '.join(error_message))
 
@@ -149,9 +156,7 @@ def change_poll_choices(poll: ForumPoll,
         choice.delete_answers()  # type: ignore
         db.session.delete(choice)
     for choice_new in add:
-        db.session.add(ForumPollChoice(
-            poll_id=poll.id,
-            choice=choice_new))
+        db.session.add(ForumPollChoice(poll_id=poll.id, choice=choice_new))
     cache.delete(ForumPollChoice.__cache_key_of_poll__.format(poll_id=poll.id))
     poll.del_property_cache('choices')
     db.session.commit()
@@ -183,11 +188,12 @@ def vote_on_poll(choice_id: int) -> flask.Response:
     """
     choice = ForumPollChoice.from_pk(choice_id, _404=True)
     if ForumPollAnswer.from_attrs(
-            poll_id=choice.poll.id,
-            user_id=flask.g.user.id):
+        poll_id=choice.poll.id, user_id=flask.g.user.id
+    ):
         raise APIException('You have already voted on this poll.')
     ForumPollAnswer.new(
-        poll_id=choice.poll.id,
-        user_id=flask.g.user.id,
-        choice_id=choice.id)
-    return flask.jsonify(f'You have successfully voted for choice {choice.id}.')
+        poll_id=choice.poll.id, user_id=flask.g.user.id, choice_id=choice.id
+    )
+    return flask.jsonify(
+        f'You have successfully voted for choice {choice.id}.'
+    )

@@ -43,9 +43,8 @@ def test_category_get_all_cached(app, authed_client):
 
 def test_new_category(app, authed_client):
     category = ForumCategory.new(
-        name='NewCategory',
-        description=None,
-        position=100)
+        name='NewCategory', description=None, position=100
+    )
     assert category.name == 'NewCategory'
     assert category.description is None
     assert category.position == 100
@@ -55,12 +54,15 @@ def test_new_category(app, authed_client):
 def test_serialize_no_perms(app, authed_client):
     category = ForumCategory.from_pk(1)
     data = NewJSONEncoder().default(category)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Site',
-        'description': 'General site discussion',
-        'position': 1,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Site',
+            'description': 'General site discussion',
+            'position': 1,
+        },
+    )
     assert 'forums' in data and len(data['forums']) == 2
 
 
@@ -68,13 +70,16 @@ def test_serialize_very_detailed(app, authed_client):
     add_permissions(app, 'forums_forums_modify')
     category = ForumCategory.from_pk(1)
     data = NewJSONEncoder().default(category)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Site',
-        'description': 'General site discussion',
-        'position': 1,
-        'deleted': False,
-        })
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Site',
+            'description': 'General site discussion',
+            'position': 1,
+            'deleted': False,
+        },
+    )
     assert 'forums' in data and len(data['forums']) == 2
 
 
@@ -82,11 +87,15 @@ def test_serialize_nested(app, authed_client):
     add_permissions(app, 'forums_forums_modify')
     category = ForumCategory.from_pk(1)
     data = category.serialize(nested=True)
-    check_dictionary(data, {
-        'id': 1,
-        'name': 'Site',
-        'description': 'General site discussion',
-        'forums': None,
-        'position': 1,
-        'deleted': False,
-        }, strict=True)
+    check_dictionary(
+        data,
+        {
+            'id': 1,
+            'name': 'Site',
+            'description': 'General site discussion',
+            'forums': None,
+            'position': 1,
+            'deleted': False,
+        },
+        strict=True,
+    )

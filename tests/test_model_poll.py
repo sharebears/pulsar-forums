@@ -85,17 +85,26 @@ def test_poll_answer_new_already_voted(app, authed_client):
 
 
 @pytest.mark.parametrize(
-    'poll_id, user_id, choice_id', [
-        (8, 1, 2), (1, 1, 2), (1, 2, 5), (1, 2, 100)])
-def test_poll_answer_invalid_data(app, authed_client, poll_id, user_id, choice_id):
+    'poll_id, user_id, choice_id',
+    [(8, 1, 2), (1, 1, 2), (1, 2, 5), (1, 2, 100)],
+)
+def test_poll_answer_invalid_data(
+    app, authed_client, poll_id, user_id, choice_id
+):
     with pytest.raises(APIException):
-        ForumPollAnswer.new(poll_id=poll_id, user_id=user_id, choice_id=choice_id)
+        ForumPollAnswer.new(
+            poll_id=poll_id, user_id=user_id, choice_id=choice_id
+        )
 
 
 def test_poll_no_permissions(app, authed_client):
-    db.engine.execute("""DELETE FROM users_permissions
-                      WHERE permission = 'forumaccess_forum_2'""")
-    db.engine.execute("""DELETE FROM users_permissions
-                      WHERE permission = 'forumaccess_thread_3'""")
+    db.engine.execute(
+        """DELETE FROM users_permissions
+                      WHERE permission = 'forumaccess_forum_2'"""
+    )
+    db.engine.execute(
+        """DELETE FROM users_permissions
+                      WHERE permission = 'forumaccess_thread_3'"""
+    )
     with pytest.raises(_403Exception):
         ForumPoll.from_pk(3, error=True)

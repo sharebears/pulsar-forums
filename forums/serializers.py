@@ -25,8 +25,8 @@ class ForumSerializer(Serializer):
 class ForumThreadSerializer(Serializer):
     id = Attribute()
     topic = Attribute()
-    forum = Attribute(nested=('id', ))
-    creator = Attribute(nested=('id', 'username', ))
+    forum = Attribute(nested=('id',))
+    creator = Attribute(nested=('id', 'username'))
     locked = Attribute()
     sticky = Attribute()
     created_time = Attribute()
@@ -42,15 +42,19 @@ class ForumThreadSerializer(Serializer):
 
 class ForumPostSerializer(Serializer):
     id = Attribute()
-    thread = Attribute(nested=('id', 'topic', ))
+    thread = Attribute(nested=('id', 'topic'))
     user = Attribute()
     contents = Attribute()
     time = Attribute()
     edited_time = Attribute()
     sticky = Attribute()
     editor = Attribute()
-    deleted = Attribute(permission='forums_posts_modify_advanced', self_access=False)
-    edit_history = Attribute(permission='forums_posts_modify_advanced', self_access=False)
+    deleted = Attribute(
+        permission='forums_posts_modify_advanced', self_access=False
+    )
+    edit_history = Attribute(
+        permission='forums_posts_modify_advanced', self_access=False
+    )
 
 
 class ForumPostEditHistorySerializer(Serializer):
@@ -63,13 +67,15 @@ class ForumPostEditHistorySerializer(Serializer):
 class ForumThreadNoteSerializer(Serializer):
     id = Attribute(permission='forums_threads_modify')
     note = Attribute(permission='forums_threads_modify')
-    user = Attribute(nested=('id', 'username'), permission='forums_threads_modify')
+    user = Attribute(
+        nested=('id', 'username'), permission='forums_threads_modify'
+    )
     time = Attribute(permission='forums_threads_modify')
 
 
 class ForumPollSerializer(Serializer):
     id = Attribute()
-    thread = Attribute(nested=('id', 'topic', ))
+    thread = Attribute(nested=('id', 'topic'))
     question = Attribute()
     closed = Attribute()
     featured = Attribute()
